@@ -1,0 +1,118 @@
+package com.backend.agrilink.controller;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.backend.agrilink.dto.CreateListingDTO;
+import com.backend.agrilink.dto.ProductResponseDTO;
+import com.backend.agrilink.model.Listing;
+import com.backend.agrilink.model.Product;
+import com.backend.agrilink.model.StatusProduto;
+import com.backend.agrilink.model.User;
+import com.backend.agrilink.repository.ListingRepository;
+import com.backend.agrilink.repository.ProductRepository;
+import com.backend.agrilink.repository.UserRepository;
+import com.backend.agrilink.service.ListingService;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/listings")
+@RequiredArgsConstructor
+@CrossOrigin("*")
+public class ListingController {
+
+    private final ListingService service;
+    private final ListingRepository listingRepository;
+    private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+
+    @PostMapping
+    @Transactional
+    public ResponseEntity<Listing> create(@RequestBody CreateListingDTO dto) {
+        Product product;
+        if (Boolean.TRUE.equals(dto.getNewProduct())) {
+            product = new Product();
+            product.setNome(dto.getProductName());
+            product.setCategoriaId(dto.getCategoriaId());
+            product = productRepository.save(product);
+        } else {
+            product = productRepository.findById(dto.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+        }
+
+        Listing listing = new Listing();
+        listing.setProductId(product.getId());
+        listing.setAgricultorId(UUID.fromString(dto.getAgricultorId()));
+        listing.setPreco(dto.getPreco());
+        listing.setQuantidade(dto.getQuantidade());
+        listing.setUnidade(dto.getUnidade());
+        listing.setProvincia(dto.getProvincia());
+        listing.setDescricao(dto.getDescricao());
+        listing.setNivelFrescura(dto.getNivelFrescura());
+        listing.setStatusProduto(StatusProduto.ATIVO);
+
+        return ResponseEntity.ok(service.save(listing));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Listing>> getAll() {
+        return ResponseEntity.ok(service.findAll());
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<List<ProductResponseDTO>> getAllProducts() {
+        List<Listing> listings = listingRepository.findAll();
+
+        List<Long> productIds = listings.stream().map(Listing::getProductId).distinct().toList();
+        List<UUID> farmerIds = listings.stream().map(Listing::getAgricultorId).distinct().toList();
+
+        Map<Long, Product> productMap = productRepository.findAllById(productIds).stream()
+                .collect(Collectors.toMap(Product::getId, p -> p));
+
+        Map<UUID, User> farmerMap = userRepository.findAllById(farmerIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        // AGORA CORRETO: O stream chama o método privado
+        List<ProductResponseDTO> response = listings.stream()
+                .map(listing -> mapToResponseDTO(listing, productMap, farmerMap))
+                .toList(); // Ou .collect(Collectors.toList()) se estiver em Java < 16
+
+        return ResponseEntity.ok(response);
+    }
+
+    // MÉTODO PRIVADO (FORA DO GETMAPPING)
+    private ProductResponseDTO mapToResponseDTO(Listing listing, Map<Long, Product> productMap, Map<UUID, User> farmerMap) {
+        Product prod = productMap.get(listing.getProductId());
+        if (prod == null) throw new RuntimeException("Produto não encontrado para listing: " + listing.getId());
+
+        User farmer = farmerMap.get(listing.getAgricultorId());
+        if (farmer == null) throw new RuntimeException("Agricultor não encontrado para listing: " + listing.getId());
+
+        return ProductResponseDTO.builder()
+                .id(listing.getId())
+                .productName(prod.getNome())
+                .productId(listing.getProductId())
+                .newProduct(false)
+                .categoriaId(prod.getCategoriaId())
+                .agricultorId(listing.getAgricultorId().toString())
+                .preco(listing.getPreco())
+                .quantidade(listing.getQuantidade())
+                .unidade(listing.getUnidade())
+                .provincia(listing.getProvincia())
+                .descricao(listing.getDescricao())
+                .nivelFrescura(listing.getNivelFrescura())
+                .build();
+    }
+}
