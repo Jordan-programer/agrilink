@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,7 +20,7 @@ class _AdminCatalogScreenState extends State<AdminCatalogScreen> {
   final _productNameController = TextEditingController();
   
   String? _selectedCategory;
-  File? _imageFile;
+  XFile? _imageFile;
   bool _isSubmitting = false;
   final ImagePicker _picker = ImagePicker();
 
@@ -64,7 +65,7 @@ class _AdminCatalogScreenState extends State<AdminCatalogScreen> {
       );
       if (pickedFile != null) {
         setState(() {
-          _imageFile = File(pickedFile.path);
+          _imageFile = pickedFile;
         });
       }
     } catch (e) {
@@ -286,7 +287,9 @@ class _AdminCatalogScreenState extends State<AdminCatalogScreen> {
         child: _imageFile != null
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.file(_imageFile!, fit: BoxFit.cover),
+                child: kIsWeb
+                    ? Image.network(_imageFile!.path, fit: BoxFit.cover)
+                    : Image.file(File(_imageFile!.path), fit: BoxFit.cover),
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,

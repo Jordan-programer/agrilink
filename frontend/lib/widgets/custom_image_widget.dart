@@ -108,7 +108,7 @@ class CustomImageWidget extends StatelessWidget {
   }
 
   Widget _buildImageView() {
-    if (imageUrl != null) {
+    if (imageUrl != null && imageUrl!.trim().isNotEmpty) {
       switch (imageUrl!.imageType) {
         case ImageType.svg:
           return SizedBox(
@@ -140,6 +140,9 @@ class CustomImageWidget extends StatelessWidget {
         case ImageType.base64:
           try {
             final base64String = imageUrl!.split(',').last;
+            if (base64String.trim().isEmpty) {
+              return errorWidget ?? _buildFallbackWidget();
+            }
             final bytes = base64Decode(base64String);
             return Image.memory(
               bytes,
@@ -150,14 +153,7 @@ class CustomImageWidget extends StatelessWidget {
               semanticLabel: semanticLabel,
             );
           } catch (e) {
-            return errorWidget ??
-                Image.asset(
-                  placeHolder,
-                  height: height,
-                  width: width,
-                  fit: fit ?? BoxFit.cover,
-                  semanticLabel: semanticLabel,
-                );
+            return errorWidget ?? _buildFallbackWidget();
           }
         case ImageType.network:
           return CachedNetworkImage(
@@ -174,15 +170,7 @@ class CustomImageWidget extends StatelessWidget {
                 backgroundColor: Colors.grey.shade100,
               ),
             ),
-            errorWidget: (context, url, error) =>
-                errorWidget ??
-                Image.asset(
-                  placeHolder,
-                  height: height,
-                  width: width,
-                  fit: fit ?? BoxFit.cover,
-                  semanticLabel: semanticLabel,
-                ),
+            errorWidget: (context, url, error) => errorWidget ?? _buildFallbackWidget(),
           );
         case ImageType.png:
         default:
@@ -196,6 +184,24 @@ class CustomImageWidget extends StatelessWidget {
           );
       }
     }
-    return SizedBox();
+    return errorWidget ?? _buildFallbackWidget();
+  }
+
+  Widget _buildFallbackWidget() {
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: radius ?? BorderRadius.zero,
+      ),
+      child: Center(
+        child: Icon(
+          Icons.image_not_supported_outlined,
+          color: Colors.grey.shade400,
+          size: 32,
+        ),
+      ),
+    );
   }
 }

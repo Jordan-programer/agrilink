@@ -213,6 +213,39 @@ class ProductCardWidget extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.scale_rounded,
+                          size: 11,
+                          color: AppTheme.outline,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${product.quantity} kg disp.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            color: AppTheme.outline,
+                          ),
+                        ),
+                        const Spacer(),
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 12,
+                          color: Colors.amber,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          product.rating.toStringAsFixed(1),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

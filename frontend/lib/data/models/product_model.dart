@@ -10,6 +10,8 @@ class ProductModel {
   final bool aiRecommended;
   final bool isOrganic;
   final String farmerName;
+  final int quantity;
+  final double rating;
 
   ProductModel({
     required this.id,
@@ -23,16 +25,20 @@ class ProductModel {
     required this.aiRecommended,
     required this.isOrganic,
     required this.farmerName,
+    required this.quantity,
+    required this.rating,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
       id: json['id']?.toString() ?? '',
-      name: json['name'] ?? '',
+      name: json['productName'] ?? json['name'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
-      category: json['category'] ?? '',
-      province: json['province'] ?? '',
-      pricePerKg: (json['pricePerKg'] as num?)?.toDouble() ?? 0.0,
+      category: json['categoriaId'] ?? json['category'] ?? '',
+      province: json['provincia'] ?? json['province'] ?? '',
+      pricePerKg: (json['preco'] as num?)?.toDouble() ?? (json['pricePerKg'] as num?)?.toDouble() ?? 0.0,
+      quantity: (json['quantidade'] as num?)?.toInt() ?? (json['quantity'] as num?)?.toInt() ?? 0,
+      rating: (json['rating'] as num?)?.toDouble() ?? 4.5,
       status: json['status'],
       // Mapeamento dos campos novos:
       provinceAvgPrice: (json['provinceAvgPrice'] as num?)?.toDouble() ?? 0.0,
@@ -55,6 +61,8 @@ class ProductModel {
       'aiRecommended': aiRecommended,
       'isOrganic': isOrganic,
       'farmerName': farmerName,
+      'quantity': quantity,
+      'rating': rating,
     };
   }
 }

@@ -17,6 +17,7 @@ public class ProductResponseDTO {
 
     private Boolean newProduct;
     private Categorias categoriaId;
+    private String imageUrl;
 
     private String agricultorId;
 

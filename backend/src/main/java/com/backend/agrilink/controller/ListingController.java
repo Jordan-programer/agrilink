@@ -113,6 +113,7 @@ public class ListingController {
                 .productId(listing.getProductId())
                 .newProduct(false)
                 .categoriaId(prod.getCategoriaId())
+                .imageUrl(prod.getImageUrl())
                 .agricultorId(listing.getAgricultorId().toString())
                 .preco(listing.getPreco())
                 .quantidade(listing.getQuantidade())
