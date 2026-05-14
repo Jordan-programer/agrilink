@@ -1,6 +1,9 @@
 package com.backend.agrilink.model;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
+
+import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -25,8 +28,19 @@ public class Order {
     private UUID agricultorId;
 
     private Double total;
+    private Double comissaoPlataforma;
 
     @Enumerated(EnumType.STRING)
     private StatusPedido status;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    private LocalDateTime deliveryDate;
+
+    private UUID transportadorId;
+
+    @Enumerated(EnumType.STRING)
+    private StatusTransporte statusTransporte;
 
 }

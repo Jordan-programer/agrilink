@@ -12,6 +12,11 @@ enum AgriStatus {
   lowStock,
   premium,
   verified,
+  pendente,
+  confirmado,
+  enviado,
+  entregue,
+  cancelado
 }
 
 class StatusBadgeWidget extends StatelessWidget {
@@ -145,6 +150,46 @@ class StatusBadgeWidget extends StatelessWidget {
           borderColor: const Color(0xFF9FA8DA),
           dotColor: const Color(0xFF283593),
           textColor: const Color(0xFF283593),
+        );
+      case AgriStatus.pendente:
+        return _StatusConfig(
+          label: 'Pendente',
+          backgroundColor: const Color(0xFFFFF3E0),
+          borderColor: const Color(0xFFFFB74D),
+          dotColor: AppTheme.warning,
+          textColor: AppTheme.warning,
+        );
+      case AgriStatus.confirmado:
+        return _StatusConfig(
+          label: 'Confirmado',
+          backgroundColor: const Color(0xFFE8F5E9),
+          borderColor: const Color(0xFF66BB6A),
+          dotColor: AppTheme.primaryLight,
+          textColor: AppTheme.primaryLight,
+        );
+      case AgriStatus.enviado:
+        return _StatusConfig(
+          label: 'Enviado',
+          backgroundColor: const Color(0xFFE3F2FD),
+          borderColor: const Color(0xFF90CAF9),
+          dotColor: const Color(0xFF1565C0),
+          textColor: const Color(0xFF1565C0),
+        );
+      case AgriStatus.entregue:
+        return _StatusConfig(
+          label: 'Entregue',
+          backgroundColor: const Color(0xFFE8F5E9),
+          borderColor: const Color(0xFF81C784),
+          dotColor: const Color(0xFF1B5E20),
+          textColor: const Color(0xFF1B5E20),
+        );
+      case AgriStatus.cancelado:
+        return _StatusConfig(
+          label: 'Cancelado',
+          backgroundColor: const Color(0xFFFFEBEE),
+          borderColor: const Color(0xFFEF9A9A),
+          dotColor: const Color(0xFFC62828),
+          textColor: const Color(0xFFC62828),
         );
     }
   }

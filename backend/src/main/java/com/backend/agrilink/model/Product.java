@@ -21,6 +21,8 @@ public class Product {
     private String nome;
 
     @Enumerated(EnumType.STRING)
-    private Categorias categoriaId    ;
+    private Categorias categoriaId;
+    
+    @jakarta.persistence.Column(name = "image_data", columnDefinition = "LONGTEXT")
     private String imageUrl;
 }

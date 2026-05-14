@@ -11,6 +11,7 @@ import 'widgets/payment_method_widget.dart';
 import 'widgets/product_specs_widget.dart';
 import 'widgets/quantity_selector_widget.dart';
 import 'widgets/transport_options_widget.dart';
+import '../payment_screen/payment_screen.dart';
 
 class ProductDetailOrderScreen extends StatefulWidget {
   final Map<String, dynamic>? productArgs;
@@ -561,22 +562,37 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Pedido enviado com sucesso! O agricultor será notificado.',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 13),
+              onPressed: () async {
+                Navigator.pop(context); // Close sheet
+                // Simulating order creation... here we'd call ApiService().post('/orders', ...)
+                // Assume order was created with ID 101 for mock purposes
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PaymentScreen(
+                      orderId: 101, // mock
+                      totalAmount: _totalPrice,
                     ),
-                    backgroundColor: AppTheme.success,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    duration: const Duration(seconds: 4),
                   ),
                 );
+                if (result == true) {
+                  // Payment successful, go back or show success
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Pedido feito e pago com sucesso!',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13),
+                      ),
+                      backgroundColor: AppTheme.success,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                  Navigator.pop(context); // go back to marketplace
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,

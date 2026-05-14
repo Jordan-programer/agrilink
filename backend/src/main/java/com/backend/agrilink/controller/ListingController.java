@@ -72,8 +72,16 @@ public class ListingController {
     }
 
     @GetMapping("/products")
-    public ResponseEntity<List<ProductResponseDTO>> getAllProducts() {
-        List<Listing> listings = listingRepository.findAll();
+    public ResponseEntity<List<ProductResponseDTO>> getAllProducts(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String role,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String userId) {
+        
+        List<Listing> listings;
+        if ("AGRICULTOR".equalsIgnoreCase(role) && userId != null && !userId.isEmpty()) {
+            listings = listingRepository.findByAgricultorId(UUID.fromString(userId));
+        } else {
+            listings = listingRepository.findAll();
+        }
 
         List<Long> productIds = listings.stream().map(Listing::getProductId).distinct().toList();
         List<UUID> farmerIds = listings.stream().map(Listing::getAgricultorId).distinct().toList();
@@ -84,10 +92,9 @@ public class ListingController {
         Map<UUID, User> farmerMap = userRepository.findAllById(farmerIds).stream()
                 .collect(Collectors.toMap(User::getId, u -> u));
 
-        // AGORA CORRETO: O stream chama o método privado
         List<ProductResponseDTO> response = listings.stream()
                 .map(listing -> mapToResponseDTO(listing, productMap, farmerMap))
-                .toList(); // Ou .collect(Collectors.toList()) se estiver em Java < 16
+                .toList();
 
         return ResponseEntity.ok(response);
     }

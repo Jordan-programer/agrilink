@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../theme/app_theme.dart';
 import '../../../services/api_service.dart';
+import '../../../services/tcp_client_service.dart';
 
 class LoginFormWidget extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -62,6 +63,19 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
         key: "user",
         value: jsonEncode(result),
       );
+      
+      // 💾 guardar userId para compatibilidade com outras telas
+      await storage.write(
+        key: "userId",
+        value: result["id"].toString(),
+      );
+
+      // 🛡️ TENTATIVA DE LOGIN SEGURO TCP (RSC01)
+      final tcpService = TcpClientService();
+      bool isConnected = await tcpService.connect();
+      if (isConnected) {
+        tcpService.sendLogin(_identifierController.text.trim(), _passwordController.text.trim());
+      }
 
       if (!mounted) return;
 

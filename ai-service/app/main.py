@@ -14,7 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/demanda/global")
+@app.get("/demanda/global")
 def global_demand():
     return predict_global_demand()
 

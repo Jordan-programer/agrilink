@@ -30,7 +30,7 @@ def predict_price(data: dict):
 
         forecast_results = []
 
-        for i in range(3):
+        for i in range(6):
             futuro_mes = mes_inicial + i
             futuro_ano = ano_atual
             if futuro_mes > 12:
@@ -51,9 +51,13 @@ def predict_price(data: dict):
 
             preco = model.predict(input_data)[0]
             
+            # Format month and short year, e.g., 05/26
+            ano_curto = str(futuro_ano)[-2:]
+            mes_formatado = f"{futuro_mes:02d}/{ano_curto}"
+            
             forecast_results.append({
                 "preco": round(float(preco), 2),
-                "mes": f"{futuro_mes}/{futuro_ano}"
+                "mes": mes_formatado
             })
 
         return forecast_results

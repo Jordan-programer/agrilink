@@ -2,16 +2,32 @@ import '../models/product_model.dart';
 import '../../core/api/api_client.dart';
 import 'dart:convert';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 class ProductRepository {
   final ApiClient apiClient;
 
   ProductRepository(this.apiClient);
 
   Future<List<ProductModel>> getProducts() async {
-    final response = await apiClient.get("/listings/products");
+    const storage = FlutterSecureStorage();
+    final userStr = await storage.read(key: "user");
+    
+    String role = '';
+    String userId = '';
+    
+    if (userStr != null) {
+      final userJson = jsonDecode(userStr);
+      role = userJson['tipo'] ?? '';
+      userId = userJson['id'] ?? '';
+    }
 
-    print("Status: ${response.statusCode}");
-    print("Body: ${response.body}");
+    String url = "/listings/products";
+    if (role.isNotEmpty && userId.isNotEmpty) {
+      url += "?role=$role&userId=$userId";
+    }
+
+    final response = await apiClient.get(url);
 
     if (response.statusCode == 200) {
       final String decodedBody = utf8.decode(response.bodyBytes);

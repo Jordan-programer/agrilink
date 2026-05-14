@@ -1,9 +1,17 @@
+import 'dart:convert';
 import 'package:agrilink_app/core/api/api_client.dart';
 import 'package:agrilink_app/core/auth/jwt_manager.dart';
 import 'package:agrilink_app/data/models/product_model.dart';
 import 'package:agrilink_app/data/repositories/product_repository.dart';
 import 'package:agrilink_app/presentation/publish_product_screen/publish_product_screen.dart';
+import 'package:agrilink_app/presentation/profile_screen/profile_screen.dart';
+import 'package:agrilink_app/presentation/transporter_screen/transporter_screen.dart';
+import 'package:agrilink_app/presentation/comprador_orders_screen/comprador_orders_screen.dart';
+import 'package:agrilink_app/presentation/admin_catalog_screen/admin_catalog_screen.dart';
+import 'package:agrilink_app/presentation/notifications_screen/notifications_screen.dart';
+import 'package:agrilink_app/presentation/chatbot_screen/chatbot_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../routes/app_routes.dart';
@@ -16,6 +24,14 @@ import './widgets/marketplace_search_widget.dart';
 import './widgets/price_chart_widget.dart';
 import './widgets/product_card_widget.dart';
 
+class NavItemDef {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final Widget screen;
+
+  NavItemDef(this.icon, this.selectedIcon, this.label, this.screen);
+}
 
 class HomeMarketplaceScreen extends StatefulWidget {
   const HomeMarketplaceScreen({super.key});
@@ -30,6 +46,9 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
   String _selectedCategory = 'Todos';
   String _searchQuery = '';
   bool _isLoading = true;
+
+  String _userRole = 'COMPRADOR'; // Default
+  List<NavItemDef> _navItems = [];
 
   // Animações
   late AnimationController _fabAnimationController;
@@ -67,103 +86,202 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
       ),
     );
 
+    _loadUserRole();
     _loadProducts();
   }
 
-@override
-void dispose() {
-  _fabAnimationController.dispose();
-  super.dispose();
-}
+  @override
+  void dispose() {
+    _fabAnimationController.dispose();
+    super.dispose();
+  }
 
-Future<void> _loadProducts() async {
-  if (!mounted) return;
-
-  setState(() => _isLoading = true);
-
-  try {
-    final data = await _repository.getProducts();
-
-    if (!mounted) return;
-
-    _products = data;
-
-    _applyFilters(); // ✔ mais claro
-
-    _fabAnimationController.forward();
-
-  } catch (e) {
-    debugPrint("Erro ao carregar produtos: $e");
-
-    if (!mounted) return;
-
-    _products = [];
-    _filteredProducts = [];
-  } finally {
-    if (mounted) {
-      setState(() => _isLoading = false);
+  Future<void> _loadUserRole() async {
+    const storage = FlutterSecureStorage();
+    final userStr = await storage.read(key: "user");
+    if (userStr != null) {
+      final userJson = jsonDecode(userStr);
+      if (mounted) {
+        setState(() {
+          _userRole = userJson['tipo'] ?? 'COMPRADOR';
+          _buildNavItems();
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _buildNavItems();
+        });
+      }
     }
   }
-}
 
-void _applyFilters() {
-  final query = _searchQuery.toLowerCase();
+  void _buildNavItems() {
+    _navItems = [];
+    
+    // Configuração baseada na função RBAC
+    if (_userRole == 'AGRICULTOR') {
+      _navItems.add(NavItemDef(Icons.storefront_outlined, Icons.storefront_rounded, 'Mercado', const SizedBox.shrink()));
+      _navItems.add(NavItemDef(Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Pedidos', const CompradorOrdersScreen()));
+      _navItems.add(NavItemDef(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil', const ProfileScreen()));
+    } else if (_userRole == 'TRANSPORTADOR') {
+      _navItems.add(NavItemDef(Icons.local_shipping_outlined, Icons.local_shipping_rounded, 'Logística', const TransporterScreen()));
+      _navItems.add(NavItemDef(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil', const ProfileScreen()));
+    } else if (_userRole == 'ADMIN') {
+      _navItems.add(NavItemDef(Icons.storefront_outlined, Icons.storefront_rounded, 'Mercado', const SizedBox.shrink()));
+      _navItems.add(NavItemDef(Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Catálogo', const AdminCatalogScreen()));
+      _navItems.add(NavItemDef(Icons.local_shipping_outlined, Icons.local_shipping_rounded, 'Logística', const TransporterScreen()));
+      _navItems.add(NavItemDef(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil', const ProfileScreen()));
+    } else {
+      // COMPRADOR
+      _navItems.add(NavItemDef(Icons.storefront_outlined, Icons.storefront_rounded, 'Mercado', const SizedBox.shrink()));
+      _navItems.add(NavItemDef(Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Pedidos', const CompradorOrdersScreen()));
+      _navItems.add(NavItemDef(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil', const ProfileScreen()));
+    }
+  }
 
-  final filtered = _products.where((p) {
-    final matchesCategory =
-        _selectedCategory == 'Todos' ||
-        p.category.toLowerCase() == _selectedCategory.toLowerCase();
+  Future<void> _loadProducts() async {
+    if (!mounted) return;
 
-    final matchesSearch =
-        query.isEmpty ||
-        p.name.toLowerCase().contains(query) ||
-        p.farmerName.toLowerCase().contains(query) ||
-        p.province.toLowerCase().contains(query);
+    setState(() => _isLoading = true);
 
-    return matchesCategory && matchesSearch;
-  }).toList();
+    try {
+      final data = await _repository.getProducts();
 
-  if (!mounted) return;
+      if (!mounted) return;
 
-  setState(() {
-    _filteredProducts = filtered;
-  });
-}
+      _products = data;
+      _applyFilters(); 
+      
+      if (_userRole == 'AGRICULTOR') {
+        _fabAnimationController.forward();
+      }
+    } catch (e) {
+      debugPrint("Erro ao carregar produtos: $e");
+      if (!mounted) return;
+      _products = [];
+      _filteredProducts = [];
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
+  void _applyFilters() {
+    final query = _searchQuery.toLowerCase();
+
+    final filtered = _products.where((p) {
+      final matchesCategory =
+          _selectedCategory == 'Todos' ||
+          p.category.toLowerCase() == _selectedCategory.toLowerCase();
+
+      final matchesSearch =
+          query.isEmpty ||
+          p.name.toLowerCase().contains(query) ||
+          p.farmerName.toLowerCase().contains(query) ||
+          p.province.toLowerCase().contains(query);
+
+      return matchesCategory && matchesSearch;
+    }).toList();
+
+    if (!mounted) return;
+
+    setState(() {
+      _filteredProducts = filtered;
+    });
+  }
+
+  Widget _getActiveScreen(ThemeData theme, bool isTablet) {
+    if (_navItems.isEmpty) return const SizedBox.shrink();
+    if (_selectedNavIndex >= _navItems.length) {
+      // Fallback in case of role change
+      return const SizedBox.shrink(); 
+    }
+    
+    final label = _navItems[_selectedNavIndex].label;
+    
+    if (label == 'Mercado') {
+      return isTablet ? _buildTabletLayout(theme) : _buildPhoneLayout(theme);
+    } else {
+      return _navItems[_selectedNavIndex].screen;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isTablet = MediaQuery.of(context).size.width >= 600;
     final theme = Theme.of(context);
 
+    if (_navItems.isEmpty) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_selectedNavIndex >= _navItems.length) {
+      _selectedNavIndex = 0;
+    }
+
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: isTablet ? _buildTabletLayout(theme) : _buildPhoneLayout(theme),
-      floatingActionButton: ScaleTransition(
-        scale: _fabScaleAnimation,
-        child: FloatingActionButton.extended(
+      body: _getActiveScreen(theme, isTablet),
+      floatingActionButton: _buildFloatingActionButtons(),
+      bottomNavigationBar: _buildBottomNav(theme),
+    );
+  }
+
+  Widget? _buildFloatingActionButtons() {
+    // Se não for a aba principal, só mostra o Chatbot
+    if (_navItems.isEmpty || _selectedNavIndex >= _navItems.length) return null;
+
+    final isMarket = _navItems[_selectedNavIndex].label == 'Mercado';
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // FAB do Chatbot (Sempre visível para todos os perfis)
+        FloatingActionButton(
+          heroTag: 'chatbot_fab',
           onPressed: () {
             Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const PublishProductScreen(),
-          ),
-        );
+              context,
+              MaterialPageRoute(builder: (_) => const ChatbotScreen()),
+            );
           },
-          icon: const Icon(Icons.add_rounded, color: Colors.white),
-          label: Text(
-            'Publicar Produto',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
+          backgroundColor: Colors.teal,
+          child: const Icon(Icons.smart_toy_rounded, color: Colors.white),
+        ),
+        
+        // FAB de Publicar Produto (Só para Agricultor no Mercado)
+        if (_userRole == 'AGRICULTOR' && isMarket) ...[
+          const SizedBox(height: 16),
+          ScaleTransition(
+            scale: _fabScaleAnimation,
+            child: FloatingActionButton.extended(
+              heroTag: 'publish_fab',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PublishProductScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.add_rounded, color: Colors.white),
+              label: Text(
+                'Publicar',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              backgroundColor: AppTheme.primary,
+              elevation: 4,
             ),
           ),
-          backgroundColor: AppTheme.primary,
-          elevation: 4,
-        ),
-      ),
-      bottomNavigationBar: _buildBottomNav(theme),
+        ],
+      ],
     );
   }
 
@@ -254,28 +372,13 @@ void _applyFilters() {
               ],
             ),
           ),
-          destinations: const [
-            NavigationRailDestination(
-              icon: Icon(Icons.storefront_outlined),
-              selectedIcon: Icon(Icons.storefront_rounded),
-              label: Text('Mercado'),
-            ),
-            NavigationRailDestination(
-              icon: Icon(Icons.receipt_long_outlined),
-              selectedIcon: Icon(Icons.receipt_long_rounded),
-              label: Text('Pedidos'),
-            ),
-            NavigationRailDestination(
-              icon: Icon(Icons.local_shipping_outlined),
-              selectedIcon: Icon(Icons.local_shipping_rounded),
-              label: Text('Transporte'),
-            ),
-            NavigationRailDestination(
-              icon: Icon(Icons.person_outline_rounded),
-              selectedIcon: Icon(Icons.person_rounded),
-              label: Text('Perfil'),
-            ),
-          ],
+          destinations: _navItems.map((item) {
+            return NavigationRailDestination(
+              icon: Icon(item.icon),
+              selectedIcon: Icon(item.selectedIcon),
+              label: Text(item.label),
+            );
+          }).toList(),
         ),
         const VerticalDivider(width: 1),
         Expanded(child: _buildPhoneLayout(theme)),
@@ -332,7 +435,12 @@ void _applyFilters() {
         Stack(
           children: [
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                );
+              },
               icon: const Icon(
                 Icons.notifications_outlined,
                 color: AppTheme.onSurface,
@@ -361,7 +469,7 @@ void _applyFilters() {
               radius: 17,
               backgroundColor: AppTheme.primaryContainer,
               child: Text(
-                'M',
+                _userRole.substring(0, 1),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -384,7 +492,7 @@ void _applyFilters() {
           child: Row(
             children: [
               Text(
-                'Produtos Disponíveis',
+                _userRole == 'AGRICULTOR' ? 'Os Meus Produtos' : 'Produtos Disponíveis',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -578,28 +686,13 @@ void _applyFilters() {
       indicatorColor: AppTheme.primaryContainer,
       elevation: 8,
       shadowColor: Colors.black.withAlpha(26),
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.storefront_outlined),
-          selectedIcon: Icon(Icons.storefront_rounded),
-          label: 'Mercado',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.receipt_long_outlined),
-          selectedIcon: Icon(Icons.receipt_long_rounded),
-          label: 'Pedidos',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.local_shipping_outlined),
-          selectedIcon: Icon(Icons.local_shipping_rounded),
-          label: 'Transporte',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline_rounded),
-          selectedIcon: Icon(Icons.person_rounded),
-          label: 'Perfil',
-        ),
-      ],
+      destinations: _navItems.map((item) {
+        return NavigationDestination(
+          icon: Icon(item.icon),
+          selectedIcon: Icon(item.selectedIcon),
+          label: item.label,
+        );
+      }).toList(),
     );
   }
 }

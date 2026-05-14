@@ -20,6 +20,7 @@ class _PriceChartWidgetState extends State<PriceChartWidget> {
 
 List<PricePoint> _points = [];
 bool _loading = true;
+DateTime _lastUpdated = DateTime.now();
 
   final Map<String, Color> _productColors = {
     'Tomate': AppTheme.warning,
@@ -27,22 +28,7 @@ bool _loading = true;
     'Milho': AppTheme.amber,
   };
 
-  final List<String> _dayLabels = [
-    '28/3',
-    '29/3',
-    '30/3',
-    '31/3',
-    '1/4',
-    '2/4',
-    '3/4',
-    '4/4',
-    '5/4',
-    '6/4',
-    '7/4',
-    '8/4',
-    '9/4',
-    '10/4',
-  ];
+  // O eixo X agora será dinâmico usando _points
 
   Future<void> _loadData() async {
   setState(() => _loading = true);
@@ -51,6 +37,7 @@ bool _loading = true;
 
   setState(() {
     _points = result;
+    _lastUpdated = DateTime.now();
     _loading = false;
   });
 }
@@ -119,7 +106,7 @@ void initState() {
                         ),
                       ),
                       Text(
-                        'Últimos 14 dias · AOA/kg · Luanda',
+                        'Próximos 6 meses · AOA/kg · Luanda',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w400,
@@ -224,17 +211,17 @@ void initState() {
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        interval: 2,
+                        interval: 1,
                         reservedSize: 22,
                         getTitlesWidget: (value, meta) {
                           final idx = value.toInt();
-                          if (idx < 0 || idx >= _dayLabels.length) {
+                          if (idx < 0 || idx >= _points.length) {
                             return const SizedBox.shrink();
                           }
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              _dayLabels[idx],
+                              _points[idx].label,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 9,
                                 color: AppTheme.outline,
@@ -298,10 +285,9 @@ void initState() {
                       tooltipRoundedRadius: 8,
                       getTooltipItems: (touchedSpots) {
                         return touchedSpots.map((spot) {
-
                           final index = spot.x.toInt();
-                          final label = index < _dayLabels.length
-                              ? _dayLabels[index]
+                          final label = index < _points.length
+                              ? _points[index].label
                               : 'N/A';
 
                           return LineTooltipItem(
@@ -329,7 +315,7 @@ void initState() {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'Actualizado às 11:58 · 10/04/2026',
+                  'Actualizado às ${_lastUpdated.hour.toString().padLeft(2, '0')}:${_lastUpdated.minute.toString().padLeft(2, '0')} · ${_lastUpdated.day.toString().padLeft(2, '0')}/${_lastUpdated.month.toString().padLeft(2, '0')}/${_lastUpdated.year}',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10,
                     color: AppTheme.outline,

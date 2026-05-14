@@ -1,5 +1,8 @@
 package com.backend.agrilink.model;
 
-public enum  StatusTransporte {
-    EM_TRANSITO, ENTREGUE, CANCELADO
+public enum StatusTransporte {
+    DISPONIVEL, 
+    EM_TRANSITO, 
+    ENTREGUE, 
+    CANCELADO
 }

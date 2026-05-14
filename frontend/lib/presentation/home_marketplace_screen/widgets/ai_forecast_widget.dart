@@ -2,6 +2,7 @@ import 'package:agrilink_app/models/forecast_model.dart';
 import 'package:agrilink_app/services/ai_forecast_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../services/udp_client_service.dart';
 import '../../../theme/app_theme.dart';
 
 class AiForecastWidget extends StatefulWidget {
@@ -16,6 +17,8 @@ class _AiForecastWidgetState extends State<AiForecastWidget> {
 
   List<ForecastModel> _forecasts = [];
   bool _loading = true;
+  String _liveUdpStatus = "A aguardar satélite...";
+  double _liveAvgPrice = 0;
 
   @override
   void initState() {
@@ -34,6 +37,23 @@ class _AiForecastWidgetState extends State<AiForecastWidget> {
     } catch (e) {
       debugPrint("Erro IA: $e");
       setState(() => _loading = false);
+    }
+    
+    // Fetch Live UDP Data (RSC06)
+    _fetchLiveUdp();
+  }
+
+  Future<void> _fetchLiveUdp() async {
+    final udpData = await UdpClientService.fetchMarketPrices();
+    if (udpData != null && mounted) {
+      setState(() {
+        _liveAvgPrice = (udpData['avgPrice'] ?? 0).toDouble();
+        _liveUdpStatus = "Conectado · Atualização em Tempo Real (UDP)";
+      });
+    } else if (mounted) {
+      setState(() {
+        _liveUdpStatus = "Offline (Sem conexão UDP)";
+      });
     }
   }
 
@@ -86,6 +106,35 @@ class _AiForecastWidgetState extends State<AiForecastWidget> {
             ],
           ),
         ),
+
+        if (_liveAvgPrice > 0)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.success.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.satellite_alt_rounded, size: 14, color: AppTheme.success),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '$_liveUdpStatus | Preço Médio Global: $_liveAvgPrice AOA/kg',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        color: AppTheme.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
         const SizedBox(height: 10),
 

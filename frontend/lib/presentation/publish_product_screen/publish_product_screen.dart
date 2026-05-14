@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:agrilink_app/data/models/product_model.dart';
-import 'package:agrilink_app/main.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:agrilink_app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,7 +16,6 @@ class PublishProductScreen extends StatefulWidget {
 
 class _PublishProductScreenState extends State<PublishProductScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _productNameController = TextEditingController();
   final _quantityController = TextEditingController();
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -25,6 +26,33 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
       3; // 1=Colhido Hoje, 2=1-2 dias, 3=3-5 dias, 4=1 semana, 5=+1 semana
   String _selectedUnit = 'kg';
   bool _isSubmitting = false;
+  List<dynamic> _availableProducts = [];
+  bool _isLoadingProducts = true;
+  bool _isFetchingAiPrice = false;
+  int? _selectedProductId;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProducts();
+  }
+
+  Future<void> _fetchProducts() async {
+    try {
+      final response = await ApiService().get('/produtos');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        setState(() {
+          _availableProducts = data;
+          _isLoadingProducts = false;
+        });
+      } else {
+        setState(() => _isLoadingProducts = false);
+      }
+    } catch (e) {
+      setState(() => _isLoadingProducts = false);
+    }
+  }
 
   static const List<Map<String, dynamic>> _categories = [
     {'label': 'Cereais & Grãos', 'icon': Icons.grain_rounded},
@@ -102,88 +130,176 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
 
   @override
   void dispose() {
-    _productNameController.dispose();
     _quantityController.dispose();
     _priceController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
 
-  Future<void> _handlePublish() async {
-  if (!_formKey.currentState!.validate()) return;
-
-  bool _isNewProduct = false;
-  ProductModel? _selectedProduct;
-
-  if (_selectedProduct == null && !_isNewProduct) {
-    _showSnack('Selecione um produto ou crie um novo');
-    return;
-  }
-
-  if (_selectedProvince == null) {
-    _showSnack('Selecione a província');
-    return;
-  }
-
-  setState(() => _isSubmitting = true);
-
-  try {
-    final user = supabase.auth.currentUser;
-
-    if (user == null) {
-      _showSnack('Utilizador não autenticado');
+  Future<void> _fetchAiPrice() async {
+    if (_selectedProductId == null) {
+      _showSnack('Selecione um produto primeiro');
+      return;
+    }
+    if (_selectedProvince == null) {
+      _showSnack('Selecione a província de origem primeiro');
       return;
     }
 
-    /// =========================
-    /// PAYLOAD PARA O BACKEND
-    /// =========================
-    final body = {
-      "agricultorId": user.id,
-      "provincia": _selectedProvince,
-      "preco": double.parse(_priceController.text),
-      "quantidade": double.parse(_quantityController.text),
-      "unidade": _selectedUnit,
-      "descricao": _descriptionController.text,
-      "frescuraLevel": _freshnessLevel,
-      "status": "ATIVO",
-    };
+    setState(() => _isFetchingAiPrice = true);
 
-    /// =========================
-    /// PRODUTO EXISTENTE
-    /// =========================
-    if (!_isNewProduct) {
-      body["productId"] = _selectedProduct!.id;
+    try {
+      final productObj = _availableProducts.firstWhere((p) => p['id'] == _selectedProductId);
+      final productName = productObj['nome'];
+
+      final response = await ApiService().get('/ai/recommend-price?product=$productName&province=$_selectedProvince');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        if (data['recommendedPrice'] != null) {
+          setState(() {
+            _priceController.text = data['recommendedPrice'].toString();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Preço sugerido pela IA: ${data['recommendedPrice']} AOA\nMotivo: ${data['reason']}',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: AppTheme.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      _showSnack('Erro ao contactar a IA');
+    } finally {
+      setState(() => _isFetchingAiPrice = false);
     }
-
-    /// =========================
-    /// PRODUTO NOVO
-    /// =========================
-    else {
-      body["novoProduto"] = {
-        "nome": _productNameController.text.trim(),
-        "categoria": _selectedCategory,
-      };
-    }
-
-    /// =========================
-    /// CHAMADA API SPRING BOOT
-    /// =========================
-    final response = await supabase.functions.invoke(
-      'create-listing', // ou teu endpoint REST
-      body: body,
-    );
-
-    setState(() => _isSubmitting = false);
-
-    if (mounted) {
-      _showSuccessDialog();
-    }
-  } catch (e) {
-    setState(() => _isSubmitting = false);
-    _showSnack('Erro ao publicar: $e');
   }
-}
+
+  String _mapProvince(String province) {
+    switch (province) {
+      case 'Bengo': return 'BENGO';
+      case 'Benguela': return 'BENGUELA';
+      case 'Bié': return 'BIE';
+      case 'Cabinda': return 'CABINDA';
+      case 'Cuando Cubango': return 'CUANDO_CUBANGO';
+      case 'Cuanza Norte': return 'CUANZA_NORTE';
+      case 'Cuanza Sul': return 'CUANZA_SUL';
+      case 'Cunene': return 'CUNENE';
+      case 'Huambo': return 'HUAMBO';
+      case 'Huíla': return 'HUILA';
+      case 'Luanda': return 'LUANDA';
+      case 'Lunda Norte': return 'LUNDA_NORTE';
+      case 'Lunda Sul': return 'LUNDA_SUL';
+      case 'Malanje': return 'MALANJE';
+      case 'Moxico': return 'MOXICO';
+      case 'Namibe': return 'NAMIBE';
+      case 'Uíge': return 'UIGE';
+      case 'Zaire': return 'ZAIRE';
+      default: return 'LUANDA';
+    }
+  }
+
+  String _mapCategory(String category) {
+    switch (category) {
+      case 'Cereais & Grãos': return 'CEREAIS_E_GRAOS';
+      case 'Frutas Tropicais': return 'FRUTAS';
+      case 'Hortícolas': return 'HORTALICAS';
+      case 'Tubérculos & Raízes': return 'RAIZES_TUBERCULOS';
+      case 'Leguminosas': return 'LEGUMINOSAS';
+      case 'Oleaginosas': return 'OLEAGINOSAS';
+      case 'Especiarias': return 'ESPECIARIAS';
+      case 'Produtos Animais': return 'PRODUTOS_ANIMAIS';
+      default: return 'OUTROS';
+    }
+  }
+
+  String _mapUnit(String unit) {
+    switch (unit) {
+      case 'kg': return 'KG';
+      case 'tonelada': return 'TONELADA';
+      case 'saco (50kg)': return 'SACO';
+      case 'caixa': return 'CAIXA';
+      case 'unidade': return 'UNIDADE';
+      case 'litro': return 'LITRO';
+      default: return 'KG';
+    }
+  }
+
+  String _mapFreshness(int level) {
+    return 'NIVEL_$level';
+  }
+
+  Future<void> _handlePublish() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedProductId == null) {
+      _showSnack('Selecione um produto');
+      return;
+    }
+
+    if (_selectedProvince == null) {
+      _showSnack('Selecione a província');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final storage = const FlutterSecureStorage();
+      final userId = await storage.read(key: "userId");
+
+      if (userId == null) {
+        _showSnack('Utilizador não autenticado');
+        setState(() => _isSubmitting = false);
+        return;
+      }
+
+      /// =========================
+      /// PAYLOAD PARA O BACKEND
+      /// =========================
+      final Map<String, dynamic> body = {
+        "agricultorId": userId,
+        "productId": _selectedProductId!,
+        "provincia": _mapProvince(_selectedProvince!),
+        "preco": double.parse(_priceController.text),
+        "quantidade": int.parse(double.parse(_quantityController.text).round().toString()),
+        "unidade": _mapUnit(_selectedUnit),
+        "descricao": _descriptionController.text,
+        "nivelFrescura": _mapFreshness(_freshnessLevel),
+        "newProduct": false,
+      };
+
+      /// =========================
+      /// CHAMADA API SPRING BOOT
+      /// =========================
+      final response = await ApiService().post('/listings', body);
+
+      setState(() => _isSubmitting = false);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (mounted) {
+          _showSuccessDialog();
+        }
+      } else {
+        _showSnack('Erro do servidor: ${response.body}');
+      }
+    } catch (e) {
+      setState(() => _isSubmitting = false);
+      _showSnack('Erro ao publicar: $e');
+    }
+  }
 
   void _showSnack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -234,7 +350,7 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '${_productNameController.text} foi publicado no mercado com sucesso.',
+              'Produto publicado no mercado com sucesso.',
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
@@ -333,7 +449,7 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
                 Icons.inventory_2_outlined,
               ),
               const SizedBox(height: 12),
-              _buildProductNameField(),
+              _buildProductSelection(),
               const SizedBox(height: 14),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,10 +463,6 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
               _buildPriceField(),
               const SizedBox(height: 14),
               _buildDescriptionField(),
-              const SizedBox(height: 22),
-              _buildSectionHeader('Categoria', Icons.category_outlined),
-              const SizedBox(height: 12),
-              _buildCategorySelector(),
               const SizedBox(height: 22),
               _buildSectionHeader('Localização', Icons.location_on_outlined),
               const SizedBox(height: 12),
@@ -394,30 +506,54 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
     );
   }
 
-  Widget _buildProductNameField() {
-    return TextFormField(
-      controller: _productNameController,
-      textCapitalization: TextCapitalization.words,
+  Widget _buildProductSelection() {
+    if (_isLoadingProducts) {
+      return const SizedBox(
+        height: 60,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return DropdownButtonFormField<int?>(
+      value: _selectedProductId,
+      isExpanded: true,
       style: GoogleFonts.plusJakartaSans(
         fontSize: 14,
         color: AppTheme.onSurface,
       ),
-      decoration: InputDecoration(
-        labelText: 'Nome do Produto',
-        hintText: 'Ex: Milho Branco, Mandioca, Tomate...',
-        prefixIcon: const Icon(
+      decoration: const InputDecoration(
+        labelText: 'Selecionar Produto',
+        hintText: 'Escolha um produto ou crie um novo',
+        prefixIcon: Icon(
           Icons.inventory_2_outlined,
           size: 20,
           color: AppTheme.primary,
         ),
       ),
+      items: [
+        ..._availableProducts.map((p) {
+          return DropdownMenuItem<int?>(
+            value: p['id'] as int,
+            child: Text(
+              p['nome'] as String,
+              style: GoogleFonts.plusJakartaSans(fontSize: 14),
+            ),
+          );
+        }),
+      ],
+      onChanged: (v) {
+        setState(() {
+          _selectedProductId = v;
+        });
+      },
       validator: (v) {
-        if (v == null || v.trim().isEmpty) return 'Informe o nome do produto';
-        if (v.trim().length < 3) return 'Nome muito curto';
+        if (v == null) return 'Selecione um produto';
         return null;
       },
     );
   }
+
+
 
   Widget _buildQuantityField() {
     return TextFormField(
@@ -465,38 +601,70 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
   }
 
   Widget _buildPriceField() {
-    return TextFormField(
-      controller: _priceController,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 3,
+          child: TextFormField(
+            controller: _priceController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+            ],
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              color: AppTheme.onSurface,
+            ),
+            decoration: InputDecoration(
+              labelText: 'Preço por Unidade',
+              hintText: '0,00',
+              prefixIcon: const Icon(
+                Icons.payments_outlined,
+                size: 20,
+                color: AppTheme.primary,
+              ),
+              suffixText: 'AOA',
+              suffixStyle: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primary,
+              ),
+            ),
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Informe o preço em AOA';
+              if (double.tryParse(v) == null || double.parse(v) <= 0) {
+                return 'Preço inválido';
+              }
+              return null;
+            },
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 1,
+          child: SizedBox(
+            height: 56, // Match standard text field height
+            child: Tooltip(
+              message: 'Sugerir preço com Inteligência Artificial',
+              child: FilledButton(
+                onPressed: _isFetchingAiPrice ? null : _fetchAiPrice,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.primaryContainer,
+                  foregroundColor: AppTheme.primary,
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isFetchingAiPrice
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.auto_awesome_rounded, color: AppTheme.primary),
+              ),
+            ),
+          ),
+        ),
       ],
-      style: GoogleFonts.plusJakartaSans(
-        fontSize: 14,
-        color: AppTheme.onSurface,
-      ),
-      decoration: InputDecoration(
-        labelText: 'Preço por Unidade',
-        hintText: '0,00',
-        prefixIcon: const Icon(
-          Icons.payments_outlined,
-          size: 20,
-          color: AppTheme.primary,
-        ),
-        suffixText: 'AOA',
-        suffixStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: AppTheme.primary,
-        ),
-      ),
-      validator: (v) {
-        if (v == null || v.isEmpty) return 'Informe o preço em AOA';
-        if (double.tryParse(v) == null || double.parse(v) <= 0) {
-          return 'Preço inválido';
-        }
-        return null;
-      },
     );
   }
 
@@ -522,66 +690,7 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
     );
   }
 
-  Widget _buildCategorySelector() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 3.2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemCount: _categories.length,
-      itemBuilder: (context, index) {
-        final cat = _categories[index];
-        final isSelected = _selectedCategory == cat['label'];
-        return GestureDetector(
-          onTap: () =>
-              setState(() => _selectedCategory = cat['label'] as String),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? AppTheme.primaryContainer
-                  : AppTheme.surfaceVariant,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? AppTheme.primary : AppTheme.outlineVariant,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                Icon(
-                  cat['icon'] as IconData,
-                  size: 18,
-                  color: isSelected
-                      ? AppTheme.primary
-                      : AppTheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    cat['label'] as String,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: isSelected ? AppTheme.primary : AppTheme.onSurface,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+
 
   Widget _buildProvinceSelector() {
     return DropdownButtonFormField<String>(

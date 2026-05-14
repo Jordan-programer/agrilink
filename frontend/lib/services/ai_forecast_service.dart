@@ -3,11 +3,11 @@ import 'package:http/http.dart' as http;
 import '../models/forecast_model.dart';
 
 class AiForecastService {
-  final String baseUrl = "http://localhost:5050";
+  final String baseUrl = "http://192.168.0.58:5001";
 
   Future<List<ForecastModel>> getForecasts() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/api/demanda/global'),
+      Uri.parse('$baseUrl/demanda/global'),
     );
 
     if (response.statusCode == 200) {

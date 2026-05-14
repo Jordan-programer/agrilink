@@ -1,117 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
 import '../../theme/app_theme.dart';
 import '../../widgets/status_badge_widget.dart';
 import '../../widgets/empty_state_widget.dart';
-
-class _OrderModel {
-  final String id;
-  final String productName;
-  final String sellerName;
-  final String sellerProvince;
-  final double totalAoa;
-  final double quantity;
-  final String unit;
-  final AgriStatus status;
-  final String deliveryDate;
-  final String placedAt;
-  final String category;
-
-  const _OrderModel({
-    required this.id,
-    required this.productName,
-    required this.sellerName,
-    required this.sellerProvince,
-    required this.totalAoa,
-    required this.quantity,
-    required this.unit,
-    required this.status,
-    required this.deliveryDate,
-    required this.placedAt,
-    required this.category,
-  });
-}
-
-final List<_OrderModel> _mockOrders = [
-  const _OrderModel(
-    id: 'PED-2026-0851',
-    productName: 'Milho Branco Premium',
-    sellerName: 'Fazenda São João',
-    sellerProvince: 'Malanje',
-    totalAoa: 145500.0,
-    quantity: 500,
-    unit: 'kg',
-    status: AgriStatus.pendente,
-    deliveryDate: '05 Abr 2026',
-    placedAt: 'há 23 min',
-    category: 'Cereais',
-  ),
-  const _OrderModel(
-    id: 'PED-2026-0849',
-    productName: 'Feijão Frade',
-    sellerName: 'Cooperativa Huambo',
-    sellerProvince: 'Huambo',
-    totalAoa: 56280.0,
-    quantity: 200,
-    unit: 'kg',
-    status: AgriStatus.confirmado,
-    deliveryDate: '03 Abr 2026',
-    placedAt: 'há 2h',
-    category: 'Leguminosas',
-  ),
-  const _OrderModel(
-    id: 'PED-2026-0847',
-    productName: 'Tomate Cacho',
-    sellerName: 'Quinta Verde',
-    sellerProvince: 'Benguela',
-    totalAoa: 23400.0,
-    quantity: 150,
-    unit: 'kg',
-    status: AgriStatus.enviado,
-    deliveryDate: '02 Abr 2026',
-    placedAt: 'ontem 15:30',
-    category: 'Hortícolas',
-  ),
-  const _OrderModel(
-    id: 'PED-2026-0843',
-    productName: 'Mandioca Fresca',
-    sellerName: 'Agro Uíge',
-    sellerProvince: 'Uíge',
-    totalAoa: 34200.0,
-    quantity: 300,
-    unit: 'kg',
-    status: AgriStatus.pendente,
-    deliveryDate: '06 Abr 2026',
-    placedAt: 'há 1 dia',
-    category: 'Tubérculos',
-  ),
-  const _OrderModel(
-    id: 'PED-2026-0839',
-    productName: 'Batata-doce',
-    sellerName: 'Produtor Kwanza Sul',
-    sellerProvince: 'Kwanza Sul',
-    totalAoa: 18750.0,
-    quantity: 100,
-    unit: 'kg',
-    status: AgriStatus.entregue,
-    deliveryDate: '28 Mar 2026',
-    placedAt: 'há 3 dias',
-    category: 'Tubérculos',
-  ),
-  const _OrderModel(
-    id: 'PED-2026-0835',
-    productName: 'Amendoim Torrado',
-    sellerName: 'Fazenda Moxico',
-    sellerProvince: 'Moxico',
-    totalAoa: 67500.0,
-    quantity: 250,
-    unit: 'kg',
-    status: AgriStatus.cancelado,
-    deliveryDate: '25 Mar 2026',
-    placedAt: 'há 5 dias',
-    category: 'Oleaginosas',
-  ),
-];
+import '../../models/order_model.dart';
+import '../../services/order_service.dart';
 
 class CompradorOrdersScreen extends StatefulWidget {
   const CompradorOrdersScreen({super.key});
@@ -123,7 +18,11 @@ class CompradorOrdersScreen extends StatefulWidget {
 class _CompradorOrdersScreenState extends State<CompradorOrdersScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final List<_OrderModel> _orders = List.from(_mockOrders);
+  final OrderService _orderService = OrderService();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  
+  List<OrderModel> _orders = [];
+  bool _isLoading = true;
 
   final List<_TabFilter> _tabs = const [
     _TabFilter(label: 'Todos', status: null),
@@ -137,6 +36,32 @@ class _CompradorOrdersScreenState extends State<CompradorOrdersScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    try {
+      final userStr = await _storage.read(key: "user");
+      if (userStr != null) {
+        final userData = jsonDecode(userStr);
+        final userId = userData['id'];
+        if (userId != null) {
+          final orders = await _orderService.getBuyerOrders(userId);
+          if (mounted) {
+            setState(() {
+              _orders = orders;
+              _isLoading = false;
+            });
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      print('Erro ao carregar pedidos: $e');
+    }
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -145,7 +70,7 @@ class _CompradorOrdersScreenState extends State<CompradorOrdersScreen>
     super.dispose();
   }
 
-  List<_OrderModel> _filteredOrders(AgriStatus? status) {
+  List<OrderModel> _filteredOrders(AgriStatus? status) {
     if (status == null) return _orders;
     return _orders.where((o) => o.status == status).toList();
   }
@@ -188,42 +113,62 @@ class _CompradorOrdersScreenState extends State<CompradorOrdersScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              setState(() {
-                final idx = _orders.indexWhere((o) => o.id == orderId);
-                if (idx != -1) {
-                  _orders[idx] = _OrderModel(
-                    id: _orders[idx].id,
-                    productName: _orders[idx].productName,
-                    sellerName: _orders[idx].sellerName,
-                    sellerProvince: _orders[idx].sellerProvince,
-                    totalAoa: _orders[idx].totalAoa,
-                    quantity: _orders[idx].quantity,
-                    unit: _orders[idx].unit,
-                    status: AgriStatus.cancelado,
-                    deliveryDate: _orders[idx].deliveryDate,
-                    placedAt: _orders[idx].placedAt,
-                    category: _orders[idx].category,
-                  );
-                }
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Pedido $orderId cancelado.',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+              
+              // Show loading or optimistic update
+              final success = await _orderService.cancelOrder(orderId);
+              
+              if (success && mounted) {
+                setState(() {
+                  final idx = _orders.indexWhere((o) => o.id == orderId);
+                  if (idx != -1) {
+                    _orders[idx] = OrderModel(
+                      id: _orders[idx].id,
+                      productName: _orders[idx].productName,
+                      sellerName: _orders[idx].sellerName,
+                      sellerProvince: _orders[idx].sellerProvince,
+                      totalAoa: _orders[idx].totalAoa,
+                      quantity: _orders[idx].quantity,
+                      unit: _orders[idx].unit,
+                      status: AgriStatus.cancelado,
+                      deliveryDate: _orders[idx].deliveryDate,
+                      placedAt: _orders[idx].placedAt,
+                      category: _orders[idx].category,
+                    );
+                  }
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Pedido $orderId cancelado.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    backgroundColor: AppTheme.errorColor,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  backgroundColor: AppTheme.errorColor,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                );
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Erro ao cancelar pedido.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    backgroundColor: AppTheme.errorColor,
+                    behavior: SnackBarBehavior.floating,
                   ),
-                ),
-              );
+                );
+              }
             },
             child: Text(
               'Cancelar Pedido',
@@ -285,7 +230,9 @@ class _CompradorOrdersScreenState extends State<CompradorOrdersScreen>
           tabs: _tabs.map((t) => Tab(text: t.label)).toList(),
         ),
       ),
-      body: TabBarView(
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : TabBarView(
         controller: _tabController,
         children: _tabs.map((tab) {
           final filtered = _filteredOrders(tab.status);
@@ -314,7 +261,7 @@ class _TabFilter {
 // ── Phone Layout ──────────────────────────────────────────────────────────────
 
 class _PhoneOrderList extends StatelessWidget {
-  final List<_OrderModel> orders;
+  final List<OrderModel> orders;
   final void Function(String) onCancel;
 
   const _PhoneOrderList({required this.orders, required this.onCancel});
@@ -334,7 +281,7 @@ class _PhoneOrderList extends StatelessWidget {
 // ── Tablet Layout ─────────────────────────────────────────────────────────────
 
 class _TabletOrderList extends StatelessWidget {
-  final List<_OrderModel> orders;
+  final List<OrderModel> orders;
   final void Function(String) onCancel;
 
   const _TabletOrderList({required this.orders, required this.onCancel});
@@ -359,7 +306,7 @@ class _TabletOrderList extends StatelessWidget {
 // ── Order Card ────────────────────────────────────────────────────────────────
 
 class _OrderCard extends StatelessWidget {
-  final _OrderModel order;
+  final OrderModel order;
   final void Function(String) onCancel;
 
   const _OrderCard({required this.order, required this.onCancel});

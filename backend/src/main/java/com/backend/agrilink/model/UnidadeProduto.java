@@ -5,5 +5,6 @@ public enum UnidadeProduto {
     TONELADA,
     SACO,
     CAIXA,
-    UNIDADE
+    UNIDADE,
+    LITRO
 }

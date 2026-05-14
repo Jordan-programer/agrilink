@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // Importação essencial
 
-import '../../../routes/app_routes.dart';
+import '../../../services/api_service.dart';
 import '../../../theme/app_theme.dart';
 import 'role_selector_widget.dart';
-
-// Variável global ou atalho para o cliente Supabase
-final supabase = Supabase.instance.client;
 
 class RegisterFormWidget extends StatefulWidget {
   const RegisterFormWidget({super.key});
@@ -28,14 +24,28 @@ class _RegisterFormWidgetState extends State<RegisterFormWidget> {
   bool _obscureConfirm = true;
   bool _isLoading = false;
   
-  // Mapeamento para os valores do seu ENUM tipo_usuario no banco
   String _selectedRole = 'AGRICULTOR'; 
   String _selectedProvince = 'Luanda';
 
   static const List<String> _provinces = [
-    'Luanda', 'Benguela', 'Uíge', 'Bengo', 'Kwanza Sul', 'Huambo', 'Malanje', 'Cabinda', 
-    'Namibe', 'Bié', 'Moxico', 'Cunene', 'Cuando Cubango', 'Lunda Norte', 'Lunda Sul', 
-    'Zaire', 'Huíla'
+    'Bengo',
+    'Benguela',
+    'Bié',
+    'Cabinda',
+    'Cuando Cubango',
+    'Cuanza Norte',
+    'Cuanza Sul',
+    'Cunene',
+    'Huambo',
+    'Huíla',
+    'Luanda',
+    'Lunda Norte',
+    'Lunda Sul',
+    'Malanje',
+    'Moxico',
+    'Namibe',
+    'Uíge',
+    'Zaire',
   ];
 
   @override
@@ -48,51 +58,68 @@ class _RegisterFormWidgetState extends State<RegisterFormWidget> {
     super.dispose();
   }
 
-  // --- LÓGICA DE CADASTRO REAL ---
+  String _mapProvinceToEnum(String province) {
+    switch (province) {
+      case 'Bengo': return 'BENGO';
+      case 'Benguela': return 'BENGUELA';
+      case 'Bié': return 'BIE';
+      case 'Cabinda': return 'CABINDA';
+      case 'Cuando Cubango': return 'CUANDO_CUBANGO';
+      case 'Cuanza Norte': return 'CUANZA_NORTE';
+      case 'Cuanza Sul': return 'CUANZA_SUL';
+      case 'Cunene': return 'CUNENE';
+      case 'Huambo': return 'HUAMBO';
+      case 'Huíla': return 'HUILA';
+      case 'Luanda': return 'LUANDA';
+      case 'Lunda Norte': return 'LUNDA_NORTE';
+      case 'Lunda Sul': return 'LUNDA_SUL';
+      case 'Malanje': return 'MALANJE';
+      case 'Moxico': return 'MOXICO';
+      case 'Namibe': return 'NAMIBE';
+      case 'Uíge': return 'UIGE';
+      case 'Zaire': return 'ZAIRE';
+      default: return 'LUANDA';
+    }
+  }
+
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      // 1. Criar Usuário no Supabase Auth (E-mail e Senha)
-      // Nota: O Supabase exige um e-mail válido. Se o usuário não fornecer, 
-      // você pode gerar um e-mail falso baseado no telefone (ex: 9xx@agrilink.com)
-      final AuthResponse res = await supabase.auth.signUp(
-        email: _emailController.text.trim().isEmpty 
+      final payload = {
+        "nome": _nameController.text.trim(),
+        "telefone": _phoneController.text.trim(),
+        "email": _emailController.text.trim().isEmpty 
                ? '${_phoneController.text.replaceAll(' ', '')}@agrilink.com' 
                : _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+        "senha": _passwordController.text.trim(),
+        "tipo": _selectedRole.toUpperCase(),
+        "provincia": _mapProvinceToEnum(_selectedProvince),
+      };
+
+      await ApiService().register(payload);
+
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Conta criada com sucesso! Por favor, inicie sessão.'), backgroundColor: Colors.green),
       );
 
-      final user = res.user;
+      // Limpar campos
+      _nameController.clear();
+      _phoneController.clear();
+      _emailController.clear();
+      _passwordController.clear();
+      _confirmPasswordController.clear();
 
-      if (user != null) {
-        // 2. Inserir dados na tabela 'usuarios' vinculando pelo ID do Auth (UUID)
-        await supabase.from('usuarios').insert({
-          'id': user.id,
-          'nome': _nameController.text.trim(),
-          'telefone': _phoneController.text.trim(),
-          'tipo': _selectedRole.toUpperCase(), // Deve bater com o ENUM do SQL
-          'provincia': _selectedProvince,
-        });
+      // NOTA: Para uma experiência ideal, o utilizador deverá trocar de aba manualmente 
+      // ou podemos invocar um callback do parente. Por agora, apenas mostramos o sucesso
+      // já que regressar à Home não faz sentido se eles precisam fazer Login primeiro.
 
-        if (!mounted) return;
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Conta criada com sucesso!'), backgroundColor: Colors.green),
-        );
-
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.homeMarketplaceScreen,
-          (route) => false,
-        );
-      }
-    } on AuthException catch (error) {
-      _showError(error.message);
     } catch (error) {
-      _showError('Ocorreu um erro inesperado. Verifique sua conexão.');
+      _showError('Ocorreu um erro ao criar conta. Verifique os seus dados ou ligação.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -137,7 +164,7 @@ class _RegisterFormWidgetState extends State<RegisterFormWidget> {
               validator: (v) => v == null || v.length < 9 ? 'Número inválido' : null,
             ),
             const SizedBox(height: 16),
-            _buildFieldLabel('E-mail'),
+            _buildFieldLabel('E-mail (Opcional)'),
             const SizedBox(height: 8),
             _buildTextField(
               controller: _emailController,

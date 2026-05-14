@@ -3,19 +3,20 @@ package com.backend.agrilink.model;
 public enum ProvinceList {
     LUANDA, 
     BENGUELA, 
-    UÍGE, 
+    UIGE, 
     BENGO, 
-    KWANZA_SUL, 
+    CUANZA_SUL, 
+    CUANZA_NORTE,
     HUAMBO, 
     MALANJE, 
     CABINDA, 
     NAMIBE, 
-    BIÉ, 
+    BIE, 
     MOXICO, 
     CUNENE, 
     CUANDO_CUBANGO, 
     LUNDA_NORTE, 
     LUNDA_SUL, 
     ZAIRE, 
-    HUÍLA
+    HUILA
 }
