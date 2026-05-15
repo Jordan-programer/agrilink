@@ -26,6 +26,11 @@ public class OrderController {
         return ResponseEntity.ok(service.findById(id));
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<com.backend.agrilink.dto.BuyerOrderResponseDTO>> getAllOrders() {
+        return ResponseEntity.ok(service.findAllOrders());
+    }
+
     @GetMapping("/comprador/{compradorId}")
     public ResponseEntity<List<com.backend.agrilink.dto.BuyerOrderResponseDTO>> getOrdersByComprador(@PathVariable java.util.UUID compradorId) {
         return ResponseEntity.ok(service.getOrdersByComprador(compradorId));
@@ -39,6 +44,11 @@ public class OrderController {
     @GetMapping("/transport/available")
     public ResponseEntity<List<com.backend.agrilink.dto.TransportOrderResponseDTO>> getAvailableTransports() {
         return ResponseEntity.ok(service.getAvailableTransports());
+    }
+
+    @GetMapping("/transport/all")
+    public ResponseEntity<List<com.backend.agrilink.dto.TransportOrderResponseDTO>> getAllTransports() {
+        return ResponseEntity.ok(service.getAllTransports());
     }
 
     @GetMapping("/transport/transporter/{transportadorId}")

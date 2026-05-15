@@ -50,7 +50,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
 
-        User user = userRepository.findByTelefone(request.getTelefone())
+        User user = userRepository.findByTelefoneOrEmail(request.getIdentifier(), request.getIdentifier())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         // 3. Verifica se a senha em texto plano bate com o Hash salvo no banco

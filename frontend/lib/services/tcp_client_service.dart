@@ -41,12 +41,12 @@ class TcpClientService {
     }
   }
 
-  void sendLogin(String email, String password) {
+  void sendLogin(String identifier, String password) {
     if (_socket == null) return;
     
     final payload = {
       "action": "LOGIN",
-      "email": email,
+      "identifier": identifier,
       "senha": password,
     };
     

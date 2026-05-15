@@ -15,12 +15,12 @@ class ApiService {
     await storage.write(key: "token", value: token);
   }
 
-  Future<Map<String, dynamic>> login(String telefone, String senha) async {
+  Future<Map<String, dynamic>> login(String identifier, String senha) async {
     final response = await http.post(
       Uri.parse("$baseUrl/auth/login"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "telefone": telefone,
+        "identifier": identifier,
         "senha": senha,
       }),
     ).timeout(const Duration(seconds: 10)); // Boa prática para redes móveis

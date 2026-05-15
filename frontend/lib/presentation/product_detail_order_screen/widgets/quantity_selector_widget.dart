@@ -3,16 +3,18 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/app_theme.dart';
 
 class QuantitySelectorWidget extends StatefulWidget {
-  final double maxQuantityKg;
-  final double pricePerKg;
+  final double maxQuantity;
+  final double pricePerUnit;
   final double selectedQuantity;
+  final String unit;
   final ValueChanged<double> onQuantityChanged;
 
   const QuantitySelectorWidget({
     super.key,
-    required this.maxQuantityKg,
-    required this.pricePerKg,
+    required this.maxQuantity,
+    required this.pricePerUnit,
     required this.selectedQuantity,
+    required this.unit,
     required this.onQuantityChanged,
   });
 
@@ -40,14 +42,14 @@ class _QuantitySelectorWidgetState extends State<QuantitySelectorWidget> {
   }
 
   void _updateQuantity(double qty) {
-    final clamped = qty.clamp(1.0, widget.maxQuantityKg);
+    final clamped = qty.clamp(1.0, widget.maxQuantity);
     _controller.text = clamped.toInt().toString();
     widget.onQuantityChanged(clamped);
   }
 
   @override
   Widget build(BuildContext context) {
-    final total = widget.selectedQuantity * widget.pricePerKg;
+    final total = widget.selectedQuantity * widget.pricePerUnit;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -77,7 +79,7 @@ class _QuantitySelectorWidgetState extends State<QuantitySelectorWidget> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Máximo disponível: ${widget.maxQuantityKg.toInt()} kg',
+              'Máximo disponível: ${widget.maxQuantity.toInt()} ${widget.unit}',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 color: AppTheme.outline,
@@ -90,7 +92,7 @@ class _QuantitySelectorWidgetState extends State<QuantitySelectorWidget> {
               runSpacing: 8,
               children: _quickAmounts.map((amount) {
                 final isSelected = widget.selectedQuantity == amount;
-                final isAvailable = amount <= widget.maxQuantityKg;
+                final isAvailable = amount <= widget.maxQuantity;
                 return InkWell(
                   onTap: isAvailable ? () => _updateQuantity(amount) : null,
                   borderRadius: BorderRadius.circular(8),
@@ -115,7 +117,7 @@ class _QuantitySelectorWidgetState extends State<QuantitySelectorWidget> {
                       ),
                     ),
                     child: Text(
-                      '${amount.toInt()} kg',
+                      '${amount.toInt()} ${widget.unit}',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -168,7 +170,7 @@ class _QuantitySelectorWidgetState extends State<QuantitySelectorWidget> {
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                     decoration: InputDecoration(
-                      suffixText: 'kg',
+                      suffixText: widget.unit,
                       suffixStyle: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         color: AppTheme.outline,

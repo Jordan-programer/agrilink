@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../routes/app_routes.dart';
 import '../../theme/app_theme.dart';
-import 'widgets/demo_credentials_widget.dart';
 import 'widgets/login_form_widget.dart';
 import 'widgets/register_form_widget.dart';
 
@@ -75,7 +74,6 @@ class _SignUpLoginScreenState extends State<SignUpLoginScreen>
               _buildTabBar(theme),
               _buildTabContent(theme),
               const SizedBox(height: 24),
-              const DemoCredentialsWidget(),
               const SizedBox(height: 24),
               _buildFooterLinks(theme),
               const SizedBox(height: 32),
@@ -115,7 +113,6 @@ class _SignUpLoginScreenState extends State<SignUpLoginScreen>
                     _buildTabBar(theme),
                     _buildTabContent(theme),
                     const SizedBox(height: 20),
-                    const DemoCredentialsWidget(),
                     const SizedBox(height: 20),
                     _buildFooterLinks(theme),
                     const SizedBox(height: 32),

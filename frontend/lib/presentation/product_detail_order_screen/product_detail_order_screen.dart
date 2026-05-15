@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
+import '../../models/cart_item_model.dart';
+import '../../providers/cart_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_image_widget.dart';
 import '../../widgets/status_badge_widget.dart';
@@ -12,11 +15,20 @@ import 'widgets/product_specs_widget.dart';
 import 'widgets/quantity_selector_widget.dart';
 import 'widgets/transport_options_widget.dart';
 import '../payment_screen/payment_screen.dart';
+import '../cart_screen/cart_screen.dart';
+import '../product_manage_screen/product_manage_screen.dart';
 
 class ProductDetailOrderScreen extends StatefulWidget {
   final Map<String, dynamic>? productArgs;
+  final String viewerRole;
+  final String viewerUserId;
 
-  const ProductDetailOrderScreen({super.key, this.productArgs});
+  const ProductDetailOrderScreen({
+    super.key,
+    this.productArgs,
+    this.viewerRole = 'COMPRADOR',
+    this.viewerUserId = '',
+  });
 
   @override
   State<ProductDetailOrderScreen> createState() =>
@@ -26,7 +38,7 @@ class ProductDetailOrderScreen extends StatefulWidget {
 class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
     with TickerProviderStateMixin {
   // TODO: Replace with [Riverpod/Bloc] for production
-  double _selectedQuantityKg = 10.0;
+  double _selectedQuantity = 10.0;
   String _selectedPayment = 'Multicaixa Express';
   String? _selectedTransportId;
   bool _isBookmarked = false;
@@ -76,6 +88,23 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
       end: Offset.zero,
     ).animate(_entranceAnimation);
     _entranceController.forward();
+
+    // Redirect AGRICULTOR to manage screen if they own this product
+    final farmerId = _product['farmerId'] as String? ?? '';
+    final isOwner = widget.viewerRole == 'AGRICULTOR' &&
+        farmerId.isNotEmpty &&
+        farmerId == widget.viewerUserId;
+    if (isOwner) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductManageScreen(product: _product),
+          ),
+        );
+      });
+    }
   }
 
   @override
@@ -85,7 +114,55 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
   }
 
   double get _totalPrice =>
-      _selectedQuantityKg * (_product['pricePerKg'] as double);
+      _selectedQuantity * (_product['pricePerKg'] as double);
+
+  Future<void> _handleAddToCart(BuildContext context) async {
+    final cart = context.read<CartProvider>();
+    final item = CartItemModel(
+      productId: _product['id'] as String? ?? DateTime.now().toString(),
+      productName: _product['name'] as String? ?? 'Produto',
+      farmerName: _product['farmerName'] as String? ?? 'Agricultor',
+      farmerId: _product['farmerId'] as String? ?? _product['farmerName'] as String? ?? 'f0',
+      farmerProvince: _product['province'] as String? ?? 'Luanda',
+      pricePerUnit: _product['pricePerKg'] as double,
+      unit: _product['unit'] as String? ?? 'kg',
+      quantity: _selectedQuantity,
+      imageUrl: _product['imageUrl'] as String?,
+      category: _product['category'] as String? ?? 'Geral',
+    );
+    await cart.addItem(item);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '${item.productName} adicionado ao carrinho!',
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+        action: SnackBarAction(
+          label: 'Ver Carrinho',
+          textColor: Colors.white,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CartScreen()),
+            );
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,9 +172,11 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
       body: isTablet ? _buildTabletLayout() : _buildPhoneLayout(),
       bottomNavigationBar: OrderSummaryBarWidget(
         totalPrice: _totalPrice,
-        quantityKg: _selectedQuantityKg,
+        quantity: _selectedQuantity,
+        unit: _product['unit'] as String? ?? 'kg',
         selectedPayment: _selectedPayment,
         onOrder: _handleOrder,
+        onAddToCart: () => _handleAddToCart(context),
       ),
     );
   }
@@ -138,11 +217,12 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
                   ),
                   const SizedBox(height: 12),
                   QuantitySelectorWidget(
-                    maxQuantityKg: _product['quantityKg'] as double,
-                    pricePerKg: _product['pricePerKg'] as double,
-                    selectedQuantity: _selectedQuantityKg,
+                    maxQuantity: _product['quantityKg'] as double,
+                    pricePerUnit: _product['pricePerKg'] as double,
+                    selectedQuantity: _selectedQuantity,
+                    unit: _product['unit'] as String? ?? 'kg',
                     onQuantityChanged: (q) =>
-                        setState(() => _selectedQuantityKg = q),
+                        setState(() => _selectedQuantity = q),
                   ),
                   const SizedBox(height: 12),
                   TransportOptionsWidget(
@@ -217,11 +297,12 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
                 ),
                 const SizedBox(height: 12),
                 QuantitySelectorWidget(
-                  maxQuantityKg: _product['quantityKg'] as double,
-                  pricePerKg: _product['pricePerKg'] as double,
-                  selectedQuantity: _selectedQuantityKg,
+                  maxQuantity: _product['quantityKg'] as double,
+                  pricePerUnit: _product['pricePerKg'] as double,
+                  selectedQuantity: _selectedQuantity,
+                  unit: _product['unit'] as String? ?? 'kg',
                   onQuantityChanged: (q) =>
-                      setState(() => _selectedQuantityKg = q),
+                      setState(() => _selectedQuantity = q),
                 ),
                 const SizedBox(height: 12),
                 TransportOptionsWidget(
@@ -519,7 +600,7 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            '${_product['name']} · ${_selectedQuantityKg.toInt()} kg',
+            '${_product['name']} · ${_selectedQuantity.toInt()} ${_product['unit'] ?? 'kg'}',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               color: AppTheme.outline,
@@ -541,10 +622,10 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
                 ),
                 _buildConfirmRow(
                   'Quantidade',
-                  '${_selectedQuantityKg.toInt()} kg',
+                  '${_selectedQuantity.toInt()} ${_product['unit'] ?? 'kg'}',
                 ),
                 _buildConfirmRow(
-                  'Preço/kg',
+                  'Preço/${_product['unit'] ?? 'kg'}',
                   'AOA ${(_product['pricePerKg'] as double).toInt()}',
                 ),
                 _buildConfirmRow('Pagamento', _selectedPayment),

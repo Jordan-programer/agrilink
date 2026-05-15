@@ -182,7 +182,7 @@ class ProductCardWidget extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '/kg',
+                          '/${product.unit}',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10,
                             color: AppTheme.outline,
@@ -223,7 +223,7 @@ class ProductCardWidget extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${product.quantity} kg disp.',
+                          '${product.quantity} ${product.unit} disp.',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10,
                             color: AppTheme.outline,

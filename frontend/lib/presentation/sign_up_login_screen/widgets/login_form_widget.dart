@@ -144,7 +144,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               controller: _identifierController,
               keyboardType: TextInputType.text,
               decoration: InputDecoration(
-                hintText: "923 000 000 ou email",
+                hintText: "Número do telefone ou email",
                 prefixIcon: const Icon(Icons.phone),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),

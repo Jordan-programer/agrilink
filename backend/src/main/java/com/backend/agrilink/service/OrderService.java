@@ -97,6 +97,37 @@ public class OrderService {
         return response;
     }
 
+    public List<BuyerOrderResponseDTO> findAllOrders() {
+        List<Order> orders = orderRepository.findAll();
+        List<BuyerOrderResponseDTO> response = new ArrayList<>();
+
+        for (Order order : orders) {
+            List<OrderItem> items = itemRepository.findByPedidoId(order.getId());
+            if (items.isEmpty()) continue;
+            
+            OrderItem firstItem = items.get(0);
+            Product product = productRepository.findById(firstItem.getProdutoId()).orElse(null);
+            User seller = order.getAgricultorId() != null ? userRepository.findById(order.getAgricultorId()).orElse(null) : null;
+            
+            BuyerOrderResponseDTO dto = new BuyerOrderResponseDTO();
+            dto.setId("PED-" + order.getId());
+            dto.setProductName(product != null ? product.getNome() : "Desconhecido");
+            dto.setCategory(product != null && product.getCategoriaId() != null ? product.getCategoriaId().name() : "Geral");
+            dto.setSellerName(seller != null ? seller.getNome() : "Desconhecido");
+            dto.setSellerProvince(seller != null && seller.getProvincia() != null ? seller.getProvincia().name() : "Desconhecido");
+            dto.setTotalAoa(order.getTotal());
+            dto.setQuantity(firstItem.getQuantidade());
+            dto.setUnit("kg"); // Defaulting to kg as we don't have it on OrderItem easily available without Listing
+            dto.setStatus(order.getStatus().name().toLowerCase());
+            dto.setDeliveryDate(order.getDeliveryDate() != null ? order.getDeliveryDate().toString() : LocalDateTime.now().plusDays(3).toString());
+            dto.setPlacedAt(order.getCreatedAt() != null ? order.getCreatedAt().toString() : LocalDateTime.now().toString());
+
+            response.add(dto);
+        }
+
+        return response;
+    }
+
     public Order cancelOrder(Long id) {
         Order order = findById(id);
         order.setStatus(StatusPedido.CANCELADO);
@@ -133,6 +164,17 @@ public class OrderService {
         List<TransportOrderResponseDTO> response = new ArrayList<>();
         for (Order order : orders) {
             response.add(mapToTransportDTO(order));
+        }
+        return response;
+    }
+
+    public List<TransportOrderResponseDTO> getAllTransports() {
+        List<Order> orders = orderRepository.findAll();
+        List<TransportOrderResponseDTO> response = new ArrayList<>();
+        for (Order order : orders) {
+            if (order.getStatusTransporte() != null) {
+                response.add(mapToTransportDTO(order));
+            }
         }
         return response;
     }

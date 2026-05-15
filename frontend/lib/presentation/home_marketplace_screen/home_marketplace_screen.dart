@@ -8,12 +8,16 @@ import 'package:agrilink_app/presentation/profile_screen/profile_screen.dart';
 import 'package:agrilink_app/presentation/transporter_screen/transporter_screen.dart';
 import 'package:agrilink_app/presentation/comprador_orders_screen/comprador_orders_screen.dart';
 import 'package:agrilink_app/presentation/admin_catalog_screen/admin_catalog_screen.dart';
+import 'package:agrilink_app/presentation/admin_dashboard_screen/admin_dashboard_screen.dart';
 import 'package:agrilink_app/presentation/notifications_screen/notifications_screen.dart';
 import 'package:agrilink_app/presentation/chatbot_screen/chatbot_screen.dart';
+import 'package:agrilink_app/presentation/cart_screen/cart_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
+import '../../providers/cart_provider.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/empty_state_widget.dart';
@@ -48,6 +52,7 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
   bool _isLoading = true;
 
   String _userRole = 'COMPRADOR'; // Default
+  String _userId = '';           // Current logged-in user ID
   List<NavItemDef> _navItems = [];
 
   // Animações
@@ -60,7 +65,18 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
   List<ProductModel> _filteredProducts = [];
 
   final List<String> _categories = [
-    'Todos', 'Cereais e Grãos', 'Hortaliças', 'Frutas', 'Raízes e Tubérculos', 'Insumos Agrícolas', 'Forragens','Outros',
+    'Todos', 
+    'Cereais e Grãos', 
+    'Hortaliças', 
+    'Frutas', 
+    'Raízes e Tubérculos', 
+    'Insumos Agrícolas', 
+    'Forragens',
+    'Leguminosas',
+    'Oleaginosas',
+    'Especiarias',
+    'Produtos Animais',
+    'Outros',
   ];
 
   @override
@@ -104,6 +120,7 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
       if (mounted) {
         setState(() {
           _userRole = userJson['tipo'] ?? 'COMPRADOR';
+          _userId = userJson['id']?.toString() ?? '';
           _buildNavItems();
         });
       }
@@ -128,14 +145,13 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
       _navItems.add(NavItemDef(Icons.local_shipping_outlined, Icons.local_shipping_rounded, 'Logística', const TransporterScreen()));
       _navItems.add(NavItemDef(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil', const ProfileScreen()));
     } else if (_userRole == 'ADMIN') {
-      _navItems.add(NavItemDef(Icons.storefront_outlined, Icons.storefront_rounded, 'Mercado', const SizedBox.shrink()));
-      _navItems.add(NavItemDef(Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Catálogo', const AdminCatalogScreen()));
-      _navItems.add(NavItemDef(Icons.local_shipping_outlined, Icons.local_shipping_rounded, 'Logística', const TransporterScreen()));
-      _navItems.add(NavItemDef(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil', const ProfileScreen()));
+      // ADMIN routing is handled directly in the build method, but we add a dummy item to avoid empty state
+      _navItems.add(NavItemDef(Icons.admin_panel_settings, Icons.admin_panel_settings, 'Admin', const SizedBox.shrink()));
     } else {
       // COMPRADOR
-      _navItems.add(NavItemDef(Icons.storefront_outlined, Icons.storefront_rounded, 'Mercado', const SizedBox.shrink()));
-      _navItems.add(NavItemDef(Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Pedidos', const CompradorOrdersScreen()));
+      _navItems.add(NavItemDef(Icons.shopping_bag_outlined, Icons.shopping_bag_rounded, 'Produtos', const SizedBox.shrink()));
+      _navItems.add(NavItemDef(Icons.groups_outlined, Icons.groups_rounded, 'Agricultores', const Scaffold(body: Center(child: Text('Lista de Agricultores (Em Breve)')))));
+      _navItems.add(NavItemDef(Icons.local_shipping_outlined, Icons.local_shipping_rounded, 'Rastreamento', const CompradorOrdersScreen()));
       _navItems.add(NavItemDef(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil', const ProfileScreen()));
     }
   }
@@ -201,7 +217,7 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
     
     final label = _navItems[_selectedNavIndex].label;
     
-    if (label == 'Mercado') {
+    if (label == 'Mercado' || label == 'Produtos') {
       return isTablet ? _buildTabletLayout(theme) : _buildPhoneLayout(theme);
     } else {
       return _navItems[_selectedNavIndex].screen;
@@ -215,6 +231,10 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
 
     if (_navItems.isEmpty) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_userRole == 'ADMIN') {
+      return const AdminDashboardScreen();
     }
 
     if (_selectedNavIndex >= _navItems.length) {
@@ -307,12 +327,14 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
               if (_isLoading) ...[
                 _buildSkeletonContent(),
               ] else ...[
-                const KpiMetricsWidget(),
-                const SizedBox(height: 16),
-                const AiForecastWidget(),
-                const SizedBox(height: 16),
-                const PriceChartWidget(),
-                const SizedBox(height: 20),
+                if (_userRole != 'COMPRADOR') ...[
+                  const KpiMetricsWidget(),
+                  const SizedBox(height: 16),
+                  const AiForecastWidget(),
+                  const SizedBox(height: 16),
+                  const PriceChartWidget(),
+                  const SizedBox(height: 20),
+                ],
                 _buildCategoryFilter(theme),
                 const SizedBox(height: 16),
                 _buildProductGrid(theme),
@@ -432,6 +454,49 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
         ],
       ),
       actions: [
+        // Cart icon with live badge — only for COMPRADOR
+        if (_userRole == 'COMPRADOR')
+          Consumer<CartProvider>(
+            builder: (context, cart, _) => Stack(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CartScreen()),
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.shopping_cart_outlined,
+                    color: AppTheme.onSurface,
+                    size: 24,
+                  ),
+                ),
+                if (cart.totalItems > 0)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.warning,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      child: Text(
+                        '${cart.totalItems}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         Stack(
           children: [
             IconButton(
@@ -585,14 +650,29 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
       );
     }
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    int crossAxisCount = 2;
+    double childAspectRatio = 0.72;
+
+    if (screenWidth >= 1200) {
+      crossAxisCount = 5;
+      childAspectRatio = 0.85;
+    } else if (screenWidth >= 900) {
+      crossAxisCount = 4;
+      childAspectRatio = 0.8;
+    } else if (screenWidth >= 600) {
+      crossAxisCount = 3;
+      childAspectRatio = 0.75;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.72,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          childAspectRatio: childAspectRatio,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),
@@ -618,7 +698,11 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
                 Navigator.pushNamed(
                   context,
                   AppRoutes.productDetailOrderScreen,
-                  arguments: product,
+                  arguments: {
+                    'product': product,
+                    'viewerRole': _userRole,
+                    'viewerUserId': _userId,
+                  },
                 );
               },
             ),

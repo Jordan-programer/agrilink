@@ -1,7 +1,9 @@
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/app_export.dart';
 import '../widgets/custom_error_widget.dart';
+import 'providers/cart_provider.dart';
 
 // Atalho global para o cliente Supabase
 final supabase = Supabase.instance.client;
@@ -21,7 +23,11 @@ void main() async {
     debugPrint('Erro ao inicializar Supabase: $e');
   }
 
-  // 3. Configuração de Erros Customizados (Seção Crítica)
+  // 3. Inicializa o CarrinhoProvider e carrega dados persistidos
+  final cartProvider = CartProvider();
+  await cartProvider.loadFromStorage();
+
+  // 4. Configuração de Erros Customizados (Seção Crítica)
   bool hasShownError = false;
   ErrorWidget.builder = (FlutterErrorDetails details) {
     if (!hasShownError) {
@@ -34,9 +40,14 @@ void main() async {
     return const SizedBox.shrink();
   };
 
-  // 4. Bloqueio de Orientação e Execução do App
+  // 5. Bloqueio de Orientação e Execução do App
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((_) {
-    runApp(const MyApp());
+    runApp(
+      ChangeNotifierProvider<CartProvider>.value(
+        value: cartProvider,
+        child: const MyApp(),
+      ),
+    );
   });
 }
 
@@ -45,25 +56,31 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Obtain the CartProvider from the root-level provider (set in main())
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+
     return Sizer(
       builder: (context, orientation, screenType) {
-        return MaterialApp(
-          title: 'agrilink',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.light,
-          // Seção Crítica de Media Query
-          builder: (context, child) {
-            return MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: const TextScaler.linear(1.0),
-              ),
-              child: child!,
-            );
-          },
-          debugShowCheckedModeBanner: false,
-          routes: AppRoutes.routes,
-          initialRoute: AppRoutes.initial,
+        return ChangeNotifierProvider<CartProvider>.value(
+          value: cartProvider,
+          child: MaterialApp(
+            title: 'agrilink',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.light,
+            // Seção Crítica de Media Query
+            builder: (context, child) {
+              return MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: const TextScaler.linear(1.0),
+                ),
+                child: child!,
+              );
+            },
+            debugShowCheckedModeBanner: false,
+            routes: AppRoutes.routes,
+            initialRoute: AppRoutes.initial,
+          ),
         );
       },
     );

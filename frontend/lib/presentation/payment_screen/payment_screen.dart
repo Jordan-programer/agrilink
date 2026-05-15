@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/cart_item_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 
 class PaymentScreen extends StatefulWidget {
   final int orderId;
   final double totalAmount;
+  final List<CartItemModel> cartItems;
 
   const PaymentScreen({
     super.key,
     required this.orderId,
     required this.totalAmount,
+    this.cartItems = const [],
   });
 
   @override

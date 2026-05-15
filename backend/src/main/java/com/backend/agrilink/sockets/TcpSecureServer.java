@@ -83,10 +83,10 @@ public class TcpSecureServer {
                         String action = request.has("action") ? request.get("action").asText() : "UNKNOWN";
 
                         if ("LOGIN".equals(action)) {
-                            String email = request.get("email").asText();
+                            String identifier = request.get("identifier").asText();
                             String password = request.get("senha").asText();
 
-                            Optional<User> userOpt = userRepository.findByEmail(email);
+                            Optional<User> userOpt = userRepository.findByTelefoneOrEmail(identifier, identifier);
                             if (userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getSenha())) {
                                 out.println("{\"status\": \"SUCCESS\", \"message\": \"Authenticated via TCP\", \"userId\": \"" + userOpt.get().getId() + "\"}");
                             } else {

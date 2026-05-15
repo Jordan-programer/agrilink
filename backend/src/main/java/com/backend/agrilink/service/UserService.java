@@ -23,6 +23,14 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
     }
 
+    public java.util.List<User> findAll() {
+        return repository.findAll();
+    }
+
+    public void deleteUser(UUID id) {
+        repository.deleteById(id);
+    }
+
     public User updateUser(UUID id, User userDetails) {
         User user = findById(id);
 
