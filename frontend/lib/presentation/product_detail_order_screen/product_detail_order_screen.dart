@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:agrilink_app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -147,7 +149,7 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
           ],
         ),
         backgroundColor: AppTheme.success,
-        behavior: SnackBarBehavior.floating,
+        behavior: SnackBarBehavior.fixed,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 3),
         action: SnackBarAction(
@@ -538,7 +540,7 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
             style: GoogleFonts.plusJakartaSans(fontSize: 13),
           ),
           backgroundColor: AppTheme.warning,
-          behavior: SnackBarBehavior.floating,
+          behavior: SnackBarBehavior.fixed,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -645,34 +647,71 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
             child: ElevatedButton(
               onPressed: () async {
                 Navigator.pop(context); // Close sheet
-                // Simulating order creation... here we'd call ApiService().post('/orders', ...)
-                // Assume order was created with ID 101 for mock purposes
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PaymentScreen(
-                      orderId: 101, // mock
-                      totalAmount: _totalPrice,
-                    ),
-                  ),
-                );
-                if (result == true) {
-                  // Payment successful, go back or show success
+                
+                final String userId = widget.viewerUserId;
+                if (userId.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Pedido feito e pago com sucesso!',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 13),
-                      ),
-                      backgroundColor: AppTheme.success,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      duration: const Duration(seconds: 4),
-                    ),
+                    const SnackBar(content: Text('Erro: Utilizador não autenticado.')),
                   );
-                  Navigator.pop(context); // go back to marketplace
+                  return;
+                }
+
+                // Prepare items for backend
+                final List<Map<String, dynamic>> items = [
+                  {
+                    "produtoId": _product['id'],
+                    "quantidade": _selectedQuantity.toInt(),
+                    "preco": _product['pricePerKg']
+                  }
+                ];
+
+                final Map<String, dynamic> body = {
+                  "compradorId": userId,
+                  "items": items
+                };
+
+                try {
+                  final response = await ApiService().post('/orders', body);
+                  if (response.statusCode == 200) {
+                    final data = jsonDecode(response.body);
+                    final orderId = data['id']; // This is the Long ID from backend
+
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PaymentScreen(
+                          orderId: orderId,
+                          totalAmount: _totalPrice,
+                        ),
+                      ),
+                    );
+                    if (result == true) {
+                      // Payment successful, go back or show success
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Pedido feito e pago com sucesso!',
+                            style: GoogleFonts.plusJakartaSans(fontSize: 13),
+                          ),
+                          backgroundColor: AppTheme.success,
+                          behavior: SnackBarBehavior.fixed,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                      Navigator.pop(context); // go back to marketplace
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erro ao criar pedido: ${response.statusCode}')),
+                    );
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Falha de conexão: $e')),
+                  );
                 }
               },
               style: ElevatedButton.styleFrom(

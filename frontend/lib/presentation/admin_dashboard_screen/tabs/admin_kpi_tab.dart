@@ -19,6 +19,7 @@ class _AdminKpiTabState extends State<AdminKpiTab> {
   
   int _totalUsers = 0;
   double _totalRevenue = 0;
+  double _totalProfit = 0;
   int _totalProducts = 0;
   int _totalOrders = 0;
 
@@ -44,6 +45,10 @@ class _AdminKpiTabState extends State<AdminKpiTab> {
             final orders = jsonDecode(ordersRes.body) as List;
             _totalOrders = orders.length;
             _totalRevenue = orders.fold(0.0, (sum, item) => sum + (item['totalAoa'] ?? 0.0));
+            
+            final approvedOrders = orders.where((o) => o['status'] == 'aprovado').toList();
+            final approvedRevenue = approvedOrders.fold(0.0, (sum, item) => sum + (item['totalAoa'] ?? 0.0));
+            _totalProfit = approvedRevenue * 0.05;
           }
           if (productsRes.statusCode == 200) {
             _totalProducts = (jsonDecode(productsRes.body) as List).length;
@@ -106,39 +111,57 @@ class _AdminKpiTabState extends State<AdminKpiTab> {
   }
 
   Widget _buildMetricGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.4,
-      children: [
-        _buildKpiCard(
-          'Vendas Totais',
-          'AOA ${_totalRevenue.toStringAsFixed(0)}',
-          Icons.payments_rounded,
-          [AppTheme.primary, AppTheme.primaryLight],
-        ),
-        _buildKpiCard(
-          'Utilizadores',
-          '$_totalUsers',
-          Icons.people_alt_rounded,
-          [AppTheme.secondary, AppTheme.amber],
-        ),
-        _buildKpiCard(
-          'Encomendas',
-          '$_totalOrders',
-          Icons.shopping_cart_rounded,
-          [const Color(0xFF673AB7), const Color(0xFF9575CD)],
-        ),
-        _buildKpiCard(
-          'Produtos',
-          '$_totalProducts',
-          Icons.inventory_2_rounded,
-          [const Color(0xFF009688), const Color(0xFF4DB6AC)],
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int crossAxisCount = 2;
+        double aspectRatio = 1.4;
+        
+        if (constraints.maxWidth >= 900) {
+          crossAxisCount = 4;
+          aspectRatio = 1.6;
+        }
+
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: aspectRatio,
+          children: [
+            _buildKpiCard(
+              'Vendas Totais',
+              'AOA ${_totalRevenue.toStringAsFixed(0)}',
+              Icons.payments_rounded,
+              [AppTheme.primary, AppTheme.primaryLight],
+            ),
+            _buildKpiCard(
+              'Utilizadores',
+              '$_totalUsers',
+              Icons.people_alt_rounded,
+              [AppTheme.secondary, AppTheme.amber],
+            ),
+            _buildKpiCard(
+              'Encomendas',
+              '$_totalOrders',
+              Icons.shopping_cart_rounded,
+              [const Color(0xFF673AB7), const Color(0xFF9575CD)],
+            ),
+            _buildKpiCard(
+              'Produtos',
+              '$_totalProducts',
+              Icons.inventory_2_rounded,
+              [const Color(0xFF009688), const Color(0xFF4DB6AC)],
+            ),
+            _buildKpiCard(
+              'Lucro (Comissões)',
+              'AOA ${_totalProfit.toStringAsFixed(0)}',
+              Icons.trending_up_rounded,
+              [const Color(0xFFE91E63), const Color(0xFFF06292)],
+            ),
+          ],
+        );
+      },
     );
   }
 

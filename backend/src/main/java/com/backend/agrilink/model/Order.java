@@ -43,4 +43,10 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private StatusTransporte statusTransporte;
 
-}
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus = PaymentStatus.PENDENTE;
+
+    @jakarta.persistence.Lob
+    @jakarta.persistence.Column(columnDefinition = "LONGTEXT")
+    private String comprovativoBase64;
+}

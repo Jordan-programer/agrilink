@@ -29,6 +29,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isSaving = false;
   String _userId = '';
   bool _isPremium = false;
+  bool _isFarmer = false;
+  double _totalSales = 0.0;
+  double _netSales = 0.0;
   bool _isUpgrading = false;
 
   static const List<String> _provinces = [
@@ -138,6 +141,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (data['plano'] == 'PREMIUM') {
             _isPremium = true;
           }
+          _isFarmer = data['tipo'] == 'AGRICULTOR';
+          if (_isFarmer) {
+            _loadFarmerSales();
+          }
           _isLoading = false;
         });
       } else {
@@ -147,6 +154,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       _showSnack('Falha de conexão.', isError: true);
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadFarmerSales() async {
+    try {
+      final response = await ApiService().get('/orders/farmer/$_userId');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        double total = 0.0;
+        for (var order in data) {
+          if (order['status'] == 'aprovado') {
+            total += order['totalAoa'];
+          }
+        }
+        setState(() {
+          _totalSales = total;
+          _netSales = total * 0.95; // 5% commission
+        });
+      }
+    } catch (e) {
+      print('Erro ao carregar vendas: $e');
     }
   }
 
@@ -214,7 +242,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       SnackBar(
         content: Text(message, style: GoogleFonts.plusJakartaSans()),
         backgroundColor: isError ? AppTheme.warning : AppTheme.success,
-        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -225,6 +252,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const SignUpLoginScreen()),
       (Route<dynamic> route) => false,
+    );
+  }
+
+  Widget _buildSalesStat(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppTheme.outline)),
+        const SizedBox(height: 2),
+        Text(value, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.onSurface)),
+      ],
     );
   }
 
@@ -294,6 +332,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               const SizedBox(height: 30),
+              
+              if (_isFarmer) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryContainer.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.primaryContainer),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Resumo de Vendas',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.primary),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildSalesStat('Vendas Brutas', '${_totalSales.toStringAsFixed(2)} AOA'),
+                          _buildSalesStat('Vendas Líquidas', '${_netSales.toStringAsFixed(2)} AOA'),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '* Descontando 5% de comissão da plataforma.',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 10, color: AppTheme.outline),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
               
               Text(
                 'DADOS PESSOAIS',

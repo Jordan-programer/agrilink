@@ -1,5 +1,8 @@
+import 'dart:convert';
+import 'package:agrilink_app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -549,19 +552,57 @@ class CartScreen extends StatelessWidget {
 
 
   Future<void> _handleCheckout(BuildContext context, CartProvider cart, double total) async {
-    final result = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PaymentScreen(
-          orderId: DateTime.now().millisecondsSinceEpoch,
-          totalAmount: total,
-          cartItems: cart.items,
-        ),
-      ),
-    );
-    if (result == true && context.mounted) {
-      await cart.clearCart();
-      if (context.mounted) Navigator.pop(context);
+    const storage = FlutterSecureStorage();
+    final userId = await storage.read(key: 'userId');
+
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro: Utilizador não autenticado.')),
+      );
+      return;
+    }
+
+    // Prepare items for backend
+    final List<Map<String, dynamic>> items = cart.items.map((item) => {
+      "produtoId": int.tryParse(item.productId) ?? 0,
+      "quantidade": item.quantity.toInt(),
+      "preco": item.pricePerUnit
+    }).toList();
+
+    final Map<String, dynamic> body = {
+      "compradorId": userId,
+      "items": items
+    };
+
+    try {
+      final response = await ApiService().post('/orders', body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final orderId = data['id']; // This is the Long ID from backend
+
+        final result = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymentScreen(
+              orderId: orderId,
+              totalAmount: total,
+              cartItems: cart.items,
+            ),
+          ),
+        );
+        if (result == true && context.mounted) {
+          await cart.clearCart();
+          if (context.mounted) Navigator.pop(context);
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao criar pedido: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Falha de conexão: $e')),
+      );
     }
   }
 

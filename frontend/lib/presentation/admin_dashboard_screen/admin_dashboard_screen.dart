@@ -5,6 +5,8 @@ import 'tabs/admin_users_tab.dart';
 import 'tabs/admin_orders_tab.dart';
 import 'tabs/admin_products_tab.dart';
 import 'tabs/admin_kpi_tab.dart';
+import 'tabs/admin_transports_tab.dart';
+import 'tabs/admin_payments_tab.dart';
 import '../profile_screen/profile_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -21,7 +23,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     const AdminKpiTab(),
     const AdminUsersTab(),
     const AdminOrdersTab(),
+    const AdminPaymentsTab(),
     const AdminProductsTab(),
+    const AdminTransportsTab(),
     const ProfileScreen(),
   ];
 
@@ -122,9 +126,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             label: 'Pedidos',
           ),
           NavigationDestination(
+            icon: Icon(Icons.payments_outlined),
+            selectedIcon: Icon(Icons.payments_rounded, color: AppTheme.primary),
+            label: 'Pagamentos',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.inventory_2_outlined),
             selectedIcon: Icon(Icons.inventory_2_rounded, color: AppTheme.primary),
             label: 'Catálogo',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.local_shipping_outlined),
+            selectedIcon: Icon(Icons.local_shipping_rounded, color: AppTheme.primary),
+            label: 'Rotas',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),
@@ -190,8 +204,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               label: Text('Pedidos'),
             ),
             NavigationRailDestination(
+              icon: Icon(Icons.payments_rounded),
+              label: Text('Pagamentos'),
+            ),
+            NavigationRailDestination(
               icon: Icon(Icons.inventory_2_rounded),
               label: Text('Catálogo'),
+            ),
+            NavigationRailDestination(
+              icon: Icon(Icons.local_shipping_rounded),
+              label: Text('Rotas'),
             ),
             NavigationRailDestination(
               icon: Icon(Icons.person_rounded),

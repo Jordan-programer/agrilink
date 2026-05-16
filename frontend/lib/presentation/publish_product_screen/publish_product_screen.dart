@@ -175,7 +175,7 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
                 ],
               ),
               backgroundColor: AppTheme.success,
-              behavior: SnackBarBehavior.floating,
+              behavior: SnackBarBehavior.fixed,
             ),
           );
         }
@@ -309,9 +309,7 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
           style: GoogleFonts.plusJakartaSans(fontSize: 13),
         ),
         backgroundColor: AppTheme.warning,
-        behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
       ),
     );
   }

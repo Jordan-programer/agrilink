@@ -201,6 +201,35 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                     _buildDetailRow('Localização', order['sellerProvince'] ?? 'Angola'),
                     _buildDetailRow('Quantidade', '${order['quantity']} ${order['unit']}'),
                     _buildDetailRow('Data', _formatDate(order['placedAt'])),
+                    
+                    if (order['items'] != null) ...[
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Itens do Pedido:',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      ...(order['items'] as List).map((item) => Padding(
+                        padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
+                        child: Row(
+                          children: [
+                            Text(
+                              '• ${item['productName']}',
+                              style: GoogleFonts.plusJakartaSans(fontSize: 12),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '${item['quantity']} x AOA ${item['price']}',
+                              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppTheme.outline),
+                            ),
+                          ],
+                        ),
+                      )).toList(),
+                    ],
+                    
                     const SizedBox(height: 12),
                     Row(
                       children: [

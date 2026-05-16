@@ -148,7 +148,7 @@ class _CompradorOrdersScreenState extends State<CompradorOrdersScreen>
                       ),
                     ),
                     backgroundColor: AppTheme.errorColor,
-                    behavior: SnackBarBehavior.floating,
+                    behavior: SnackBarBehavior.fixed,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -165,7 +165,7 @@ class _CompradorOrdersScreenState extends State<CompradorOrdersScreen>
                       ),
                     ),
                     backgroundColor: AppTheme.errorColor,
-                    behavior: SnackBarBehavior.floating,
+                    behavior: SnackBarBehavior.fixed,
                   ),
                 );
               }

@@ -89,7 +89,7 @@ class _ProductManageScreenState extends State<ProductManageScreen>
           ],
         ),
         backgroundColor: AppTheme.success,
-        behavior: SnackBarBehavior.floating,
+        behavior: SnackBarBehavior.fixed,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 3),
       ),
@@ -135,7 +135,7 @@ class _ProductManageScreenState extends State<ProductManageScreen>
             style: GoogleFonts.plusJakartaSans(fontSize: 13),
           ),
           backgroundColor: AppTheme.errorColor,
-          behavior: SnackBarBehavior.floating,
+          behavior: SnackBarBehavior.fixed,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );

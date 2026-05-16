@@ -20,6 +20,7 @@ public class ProductResponseDTO {
     private String imageUrl;
 
     private String agricultorId;
+    private String farmerName;
 
     private Double preco;
     private Integer quantidade;

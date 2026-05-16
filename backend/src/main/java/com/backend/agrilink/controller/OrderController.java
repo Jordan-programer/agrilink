@@ -36,6 +36,11 @@ public class OrderController {
         return ResponseEntity.ok(service.getOrdersByComprador(compradorId));
     }
 
+    @GetMapping("/farmer/{farmerId}")
+    public ResponseEntity<List<com.backend.agrilink.dto.BuyerOrderResponseDTO>> getOrdersByFarmer(@PathVariable java.util.UUID farmerId) {
+        return ResponseEntity.ok(service.getOrdersByFarmer(farmerId));
+    }
+
     @PostMapping("/{id}/cancel")
     public ResponseEntity<Order> cancelOrder(@PathVariable Long id) {
         return ResponseEntity.ok(service.cancelOrder(id));
@@ -59,5 +64,16 @@ public class OrderController {
     @PutMapping("/{id}/transport/accept/{transportadorId}")
     public ResponseEntity<Order> acceptTransport(@PathVariable Long id, @PathVariable java.util.UUID transportadorId) {
         return ResponseEntity.ok(service.acceptTransport(id, transportadorId));
+    }
+
+    @PostMapping("/{id}/upload-comprovativo")
+    public ResponseEntity<Order> uploadComprovativo(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        String base64 = body.get("comprovativo");
+        return ResponseEntity.ok(service.uploadComprovativo(id, base64));
+    }
+
+    @PostMapping("/{id}/approve-payment")
+    public ResponseEntity<Order> approvePayment(@PathVariable Long id) {
+        return ResponseEntity.ok(service.approvePayment(id));
     }
 }

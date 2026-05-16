@@ -16,10 +16,14 @@ class AdminProductsTab extends StatefulWidget {
 }
 
 class _AdminProductsTabState extends State<AdminProductsTab> {
-  // Listing State
+  // Listing State (Catalog)
   List<dynamic> _products = [];
   bool _isLoading = true;
   final ApiClient _apiClient = ApiClient(JwtManager());
+
+  // Published Products State
+  List<dynamic> _publishedProducts = [];
+  bool _isLoadingPublished = true;
 
   // Form State
   final _formKey = GlobalKey<FormState>();
@@ -46,6 +50,7 @@ class _AdminProductsTabState extends State<AdminProductsTab> {
   void initState() {
     super.initState();
     _fetchProducts();
+    _fetchPublishedProducts();
   }
 
   @override
@@ -68,6 +73,23 @@ class _AdminProductsTabState extends State<AdminProductsTab> {
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _fetchPublishedProducts() async {
+    setState(() => _isLoadingPublished = true);
+    try {
+      final response = await _apiClient.get('/listings/products');
+      if (response.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _publishedProducts = jsonDecode(utf8.decode(response.bodyBytes));
+            _isLoadingPublished = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingPublished = false);
     }
   }
 
@@ -144,7 +166,7 @@ class _AdminProductsTabState extends State<AdminProductsTab> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Column(
         children: [
           Container(
@@ -156,8 +178,9 @@ class _AdminProductsTabState extends State<AdminProductsTab> {
               indicatorWeight: 3,
               labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13),
               tabs: const [
-                Tab(text: 'Catálogo Ativo', icon: Icon(Icons.inventory_2_rounded, size: 20)),
-                Tab(text: 'Adicionar Novo', icon: Icon(Icons.add_circle_outline_rounded, size: 20)),
+                Tab(text: 'Catálogo', icon: Icon(Icons.inventory_2_rounded, size: 20)),
+                Tab(text: 'Publicados', icon: Icon(Icons.shopping_bag_rounded, size: 20)),
+                Tab(text: 'Adicionar Tipo', icon: Icon(Icons.add_circle_outline_rounded, size: 20)),
               ],
             ),
           ),
@@ -165,6 +188,7 @@ class _AdminProductsTabState extends State<AdminProductsTab> {
             child: TabBarView(
               children: [
                 _buildListingTab(),
+                _buildPublishedTab(),
                 _buildAddTab(),
               ],
             ),
@@ -219,6 +243,216 @@ class _AdminProductsTabState extends State<AdminProductsTab> {
         },
       ),
     );
+  }
+
+  Widget _buildPublishedTab() {
+    if (_isLoadingPublished) return const Center(child: CircularProgressIndicator());
+    if (_publishedProducts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.shopping_bag_outlined, size: 64, color: AppTheme.outline.withOpacity(0.3)),
+            const SizedBox(height: 16),
+            const Text('Nenhum produto publicado'),
+            TextButton(onPressed: _fetchPublishedProducts, child: const Text('Actualizar')),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchPublishedProducts,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          int crossAxisCount = 2;
+          double aspectRatio = 0.75;
+          
+          if (constraints.maxWidth >= 900) {
+            crossAxisCount = 4;
+            aspectRatio = 0.85;
+          } else if (constraints.maxWidth >= 600) {
+            crossAxisCount = 3;
+            aspectRatio = 0.8;
+          }
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(20),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              childAspectRatio: aspectRatio,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: _publishedProducts.length,
+            itemBuilder: (context, index) => _buildPublishedProductCard(_publishedProducts[index]),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPublishedProductCard(dynamic listing) {
+    final name = listing['productName'] ?? 'Produto';
+    final farmer = listing['farmerName'] ?? 'Agricultor';
+    final price = listing['preco'] ?? 0.0;
+    final unit = listing['unidade'] ?? 'kg';
+    final quantity = listing['quantidade'] ?? 0;
+    final id = listing['id'];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    child: _buildProductImage(listing['imageUrl']),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(name, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                    IconButton(
+                      onPressed: () => _editListing(listing),
+                      icon: const Icon(Icons.edit_outlined, color: AppTheme.primary, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _confirmDeleteListing(id, name),
+                      icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.errorColor, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text('Por: $farmer', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: AppTheme.outline), maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('AOA $price/$unit', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 11, color: AppTheme.primary)),
+                    Text('Qtd: $quantity', style: GoogleFonts.plusJakartaSans(fontSize: 10, color: AppTheme.outline)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteListing(dynamic id, String name) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remover Publicação?'),
+        content: Text('Deseja remover a publicação de "$name"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.errorColor),
+            child: const Text('Remover'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final response = await _apiClient.delete('/listings/$id');
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          _showSnack('Publicação removida com sucesso');
+          _fetchPublishedProducts();
+        } else {
+          _showSnack('Erro ao remover: ${response.statusCode}');
+        }
+      } catch (e) {
+        _showSnack('Erro: $e');
+      }
+    }
+  }
+
+  Future<void> _editListing(dynamic listing) async {
+    final priceController = TextEditingController(text: listing['preco'].toString());
+    final quantityController = TextEditingController(text: listing['quantidade'].toString());
+    final name = listing['productName'] ?? 'Produto';
+
+    final updated = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Editar $name'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: priceController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Preço (AOA)'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: quantityController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Quantidade'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+
+    if (updated == true) {
+      try {
+        final Map<String, dynamic> body = {
+          "preco": double.tryParse(priceController.text) ?? listing['preco'],
+          "quantidade": int.tryParse(quantityController.text) ?? listing['quantidade'],
+          "unidade": listing['unidade'],
+          "provincia": listing['provincia'],
+          "descricao": listing['descricao'],
+          "nivelFrescura": listing['nivelFrescura'],
+        };
+
+        final response = await _apiClient.put('/listings/${listing['id']}', body);
+        if (response.statusCode == 200) {
+          _showSnack('Publicação atualizada com sucesso');
+          _fetchPublishedProducts();
+        } else {
+          _showSnack('Erro ao atualizar: ${response.statusCode}');
+        }
+      } catch (e) {
+        _showSnack('Erro: $e');
+      }
+    }
   }
 
   Widget _buildAddTab() {
@@ -305,44 +539,59 @@ class _AdminProductsTabState extends State<AdminProductsTab> {
   }
 
   Widget _buildCategorySelector() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 3.5,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemCount: _categoriesList.length,
-      itemBuilder: (context, index) {
-        final cat = _categoriesList[index];
-        final isSelected = _selectedCategory == cat['id'];
-        return GestureDetector(
-          onTap: () => setState(() => _selectedCategory = cat['id'] as String),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primary : AppTheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isSelected ? AppTheme.primary : AppTheme.outlineVariant),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(cat['icon'] as IconData, size: 16, color: isSelected ? Colors.white : AppTheme.outline),
-                const SizedBox(width: 8),
-                Text(
-                  cat['label'] as String,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? Colors.white : AppTheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int crossAxisCount = 2;
+        double aspectRatio = 3.5;
+        
+        if (constraints.maxWidth >= 900) {
+          crossAxisCount = 5;
+          aspectRatio = 2.5;
+        } else if (constraints.maxWidth >= 600) {
+          crossAxisCount = 3;
+          aspectRatio = 3.0;
+        }
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: aspectRatio,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
           ),
+          itemCount: _categoriesList.length,
+          itemBuilder: (context, index) {
+            final cat = _categoriesList[index];
+            final isSelected = _selectedCategory == cat['id'];
+            return GestureDetector(
+              onTap: () => setState(() => _selectedCategory = cat['id'] as String),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTheme.primary : AppTheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: isSelected ? AppTheme.primary : AppTheme.outlineVariant),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(cat['icon'] as IconData, size: 16, color: isSelected ? Colors.white : AppTheme.outline),
+                    const SizedBox(width: 8),
+                    Text(
+                      cat['label'] as String,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? Colors.white : AppTheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );

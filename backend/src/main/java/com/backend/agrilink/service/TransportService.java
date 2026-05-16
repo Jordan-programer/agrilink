@@ -24,4 +24,23 @@ public class TransportService {
     public List<Transport> findAll() {
         return repository.findAll();
     }
+
+    public Transport findById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transporte não encontrado"));
+    }
+
+    public Transport updateTransport(Long id, Transport details) {
+        Transport transport = findById(id);
+        transport.setOrigem(details.getOrigem());
+        transport.setDestino(details.getDestino());
+        transport.setDataPartida(details.getDataPartida());
+        transport.setDataChegada(details.getDataChegada());
+        transport.setTransporte(details.getTransporte());
+        return repository.save(transport);
+    }
+
+    public void deleteTransport(Long id) {
+        repository.deleteById(id);
+    }
 }

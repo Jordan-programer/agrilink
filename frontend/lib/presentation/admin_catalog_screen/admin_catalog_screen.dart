@@ -123,7 +123,7 @@ class _AdminCatalogScreenState extends State<AdminCatalogScreen> {
           style: GoogleFonts.plusJakartaSans(fontSize: 13),
         ),
         backgroundColor: AppTheme.warning,
-        behavior: SnackBarBehavior.floating,
+        behavior: SnackBarBehavior.fixed,
       ),
     );
   }

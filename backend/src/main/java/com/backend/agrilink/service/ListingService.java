@@ -28,4 +28,27 @@ public class ListingService {
     public List<Listing> findByProvincia(String provincia) {
         return repository.findByProvincia(provincia);
     }
+
+    public Listing findById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Listing não encontrada"));
+    }
+
+    public Listing updateListing(Long id, Listing details) {
+        Listing listing = findById(id);
+        listing.setPreco(details.getPreco());
+        listing.setQuantidade(details.getQuantidade());
+        listing.setUnidade(details.getUnidade());
+        listing.setProvincia(details.getProvincia());
+        listing.setDescricao(details.getDescricao());
+        listing.setNivelFrescura(details.getNivelFrescura());
+        if (details.getStatusProduto() != null) {
+            listing.setStatusProduto(details.getStatusProduto());
+        }
+        return repository.save(listing);
+    }
+
+    public void deleteListing(Long id) {
+        repository.deleteById(id);
+    }
 }

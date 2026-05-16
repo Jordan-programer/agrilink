@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import java.util.List;
 
 @Data
 @Builder
@@ -21,4 +22,6 @@ public class BuyerOrderResponseDTO {
     private String deliveryDate;
     private String placedAt;
     private String category;
+    private List<OrderItemResponseDTO> items;
+    private String comprovativoBase64;
 }

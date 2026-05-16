@@ -25,4 +25,15 @@ public class TransportController {
     public ResponseEntity<List<Transport>> getAll() {
         return ResponseEntity.ok(service.findAll());
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Transport> update(@PathVariable Long id, @RequestBody Transport transport) {
+        return ResponseEntity.ok(service.updateTransport(id, transport));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.deleteTransport(id);
+        return ResponseEntity.ok().build();
+    }
 }
