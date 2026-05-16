@@ -460,6 +460,31 @@ class _OrderCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
+                
+                if (order.items != null && order.items!.isNotEmpty) ...[
+                  Text(
+                    'Itens do Pedido:',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.onSurface),
+                  ),
+                  const SizedBox(height: 4),
+                  ...order.items!.map((item) => Padding(
+                    padding: const EdgeInsets.only(left: 4.0, bottom: 2.0),
+                    child: Row(
+                      children: [
+                        Text(
+                          '• ${item.productName}',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppTheme.onSurfaceVariant),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${item.quantity.toStringAsFixed(0)} x ${item.price.toStringAsFixed(2)}',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: AppTheme.outline),
+                        ),
+                      ],
+                    ),
+                  )).toList(),
+                  const SizedBox(height: 10),
+                ],
 
                 // Divider
                 Divider(

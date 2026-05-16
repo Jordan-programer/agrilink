@@ -12,6 +12,7 @@ class OrderModel {
   final String deliveryDate;
   final String placedAt;
   final String category;
+  final List<OrderItemModel>? items;
 
   const OrderModel({
     required this.id,
@@ -25,6 +26,7 @@ class OrderModel {
     required this.deliveryDate,
     required this.placedAt,
     required this.category,
+    this.items,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -40,6 +42,9 @@ class OrderModel {
       deliveryDate: _formatDate(json['deliveryDate'] as String?),
       placedAt: _formatDate(json['placedAt'] as String?),
       category: json['category'] as String? ?? 'Geral',
+      items: (json['items'] as List?)
+          ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
   }
 
@@ -73,5 +78,25 @@ class OrderModel {
     const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     if (month >= 1 && month <= 12) return months[month - 1];
     return '';
+  }
+}
+
+class OrderItemModel {
+  final String productName;
+  final double quantity;
+  final double price;
+
+  const OrderItemModel({
+    required this.productName,
+    required this.quantity,
+    required this.price,
+  });
+
+  factory OrderItemModel.fromJson(Map<String, dynamic> json) {
+    return OrderItemModel(
+      productName: json['productName'] as String? ?? 'Desconhecido',
+      quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+    );
   }
 }
