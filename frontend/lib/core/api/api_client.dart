@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../auth/jwt_manager.dart';
 
 class ApiClient {
-  final String baseUrl = "http://192.168.0.58:8080";
+  final String baseUrl = "https://agrilink-production-c9e6.up.railway.app";
   final JwtManager jwtManager;
 
   ApiClient(this.jwtManager);

@@ -1,7 +1,7 @@
 
 class ApiConfig {
 
-  static const String baseUrl = "http://192.168.0.58:8080"; 
+  static const String baseUrl = "https://agrilink-production-c9e6.up.railway.app";
   
   static const String authEndpoint = "$baseUrl/auth";
   static const String productsEndpoint = "$baseUrl/products";
