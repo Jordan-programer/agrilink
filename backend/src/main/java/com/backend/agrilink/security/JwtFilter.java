@@ -69,10 +69,10 @@ protected void doFilterInternal(HttpServletRequest request,
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
     } else {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        filterChain.doFilter(request, response);
         return;
     }
 
     filterChain.doFilter(request, response);
-}
+    }
 }
