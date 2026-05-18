@@ -9,8 +9,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.core.Ordered;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,32 +23,29 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
 
 @Bean
-public CorsConfigurationSource corsConfigurationSource() {
+public FilterRegistrationBean<CorsFilter> corsFilterRegistrationBean() {
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     CorsConfiguration config = new CorsConfiguration();
-
+    config.setAllowCredentials(true);
     config.setAllowedOrigins(List.of(
         "http://localhost:5050",
-       // "http://192.168.0.58:8080",
         "http://192.168.0.58",
         "https://agrilink-web-five.vercel.app",
         "http://localhost:56039"
-        )); 
-    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    ));
     config.setAllowedHeaders(List.of("*"));
-    config.setAllowCredentials(true);
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     source.registerCorsConfiguration("/**", config);
-
-    return source;
+    
+    FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(new CorsFilter(source));
+    bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+    return bean;
 }
 
     @Bean
 public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
-        
-        .csrf(csrf -> csrf.disable()) 
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
             .requestMatchers("/auth/**").permitAll()
