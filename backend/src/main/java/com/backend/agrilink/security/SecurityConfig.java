@@ -13,6 +13,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.core.Ordered;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,21 +31,27 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
 
 @Bean
-public FilterRegistrationBean<CorsFilter> corsFilterRegistrationBean() {
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    CorsConfiguration config = new CorsConfiguration();
-    config.setAllowCredentials(true);
-    config.setAllowedOrigins(List.of(
-        "http://localhost:5050",
-        "http://192.168.0.58",
-        "https://agrilink-web-five.vercel.app",
-        "http://localhost:56039"
-    ));
-    config.setAllowedHeaders(List.of("*"));
-    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    source.registerCorsConfiguration("/**", config);
-    
-    FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(new CorsFilter(source));
+public FilterRegistrationBean<Filter> customCorsFilter() {
+    FilterRegistrationBean<Filter> bean = new FilterRegistrationBean<>();
+    bean.setFilter(new Filter() {
+        @Override
+        public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+            HttpServletRequest request = (HttpServletRequest) req;
+            HttpServletResponse response = (HttpServletResponse) res;
+            
+            String origin = request.getHeader("Origin");
+            response.setHeader("Access-Control-Allow-Origin", origin);
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            response.setHeader("Access-Control-Allow-Headers", "*");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            
+            if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                chain.doFilter(req, res);
+            }
+        }
+    });
     bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
     return bean;
 }
