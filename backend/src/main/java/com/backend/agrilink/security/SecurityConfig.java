@@ -25,10 +25,11 @@ public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
 
     config.setAllowedOriginPatterns(List.of(
-        "http://localhost:5050/*",
-        "http://192.168.0.58:8080/*",
-        "http://192.168.0.58/*",
-        "https://agrilink-web-five.vercel.app"
+        "http://localhost:5050",
+        "http://192.168.0.58:8080",
+        "http://192.168.0.58",
+        "https://agrilink-web-five.vercel.app",
+        "http://localhost:56039"
         ));
 
     config.addAllowedOriginPattern("*"); 
