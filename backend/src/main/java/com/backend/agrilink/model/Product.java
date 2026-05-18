@@ -23,6 +23,6 @@ public class Product {
     @Enumerated(EnumType.STRING)
     private Categorias categoriaId;
     
-    @jakarta.persistence.Column(name = "image_data", columnDefinition = "LONGTEXT")
+    @jakarta.persistence.Column(name = "image_data", columnDefinition = "TEXT")
     private String imageUrl;
 }

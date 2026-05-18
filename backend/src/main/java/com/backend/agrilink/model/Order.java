@@ -47,6 +47,6 @@ public class Order {
     private PaymentStatus paymentStatus = PaymentStatus.PENDENTE;
 
     @jakarta.persistence.Lob
-    @jakarta.persistence.Column(columnDefinition = "LONGTEXT")
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
     private String comprovativoBase64;
 }
