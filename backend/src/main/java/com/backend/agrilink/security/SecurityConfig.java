@@ -26,7 +26,7 @@ public CorsConfigurationSource corsConfigurationSource() {
 
     config.setAllowedOrigins(List.of(
         "http://localhost:5050",
-        "http://192.168.0.58:8080",
+       // "http://192.168.0.58:8080",
         "http://192.168.0.58",
         "https://agrilink-web-five.vercel.app",
         "http://localhost:56039"
@@ -48,6 +48,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         .csrf(csrf -> csrf.disable()) 
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth
+            .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
             .requestMatchers("/auth/**").permitAll()
             .anyRequest().authenticated()
         )
