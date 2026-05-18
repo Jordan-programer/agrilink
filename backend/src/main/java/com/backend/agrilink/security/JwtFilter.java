@@ -31,49 +31,48 @@ public class JwtFilter extends OncePerRequestFilter {
 
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+protected void doFilterInternal(HttpServletRequest request,
+                                HttpServletResponse response,
+                                FilterChain filterChain)
+        throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
-
-        // 1. Verifica se o cabeçalho existe e começa com "Bearer "
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        String token = authHeader.substring(7);
-
-        // 2. Valida o token
-        if (jwtService.validateToken(token)) {
-            // 3. Extrai a identificação do usuário (no seu caso, o telefone)
-            String telefone = jwtService.extractTelefone(token);
-
-            // 4. Verifica se já não existe uma autenticação no contexto atual
-            if (telefone != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                
-                // 5. Cria o objeto de autenticação do Spring (Ainda sem as roles específicas)
-                String tipo = jwtService.extractTipo(token);
-
-                UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(
-                        telefone,
-                        null,
-                        List.of(new SimpleGrantedAuthority("TIPO_" + tipo.toUpperCase()))
-                    );
-                
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                
-                // 6. Finalmente, avisa ao Spring: "Este usuário está autenticado!"
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-        } else {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return; // Bloqueia a requisição se o token for inválido
-        }
-
+    // 👇 ESSENCIAL PARA CORS
+    if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
         filterChain.doFilter(request, response);
+        return;
     }
+
+    String authHeader = request.getHeader("Authorization");
+
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        filterChain.doFilter(request, response);
+        return;
+    }
+
+    String token = authHeader.substring(7);
+
+    if (jwtService.validateToken(token)) {
+        String telefone = jwtService.extractTelefone(token);
+
+        if (telefone != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            String tipo = jwtService.extractTipo(token);
+
+            UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(
+                    telefone,
+                    null,
+                    List.of(new SimpleGrantedAuthority("TIPO_" + tipo.toUpperCase()))
+                );
+
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
+    } else {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        return;
+    }
+
+    filterChain.doFilter(request, response);
+}
 }
