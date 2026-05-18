@@ -24,15 +24,13 @@ public class SecurityConfig {
 public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
 
-    config.setAllowedOriginPatterns(List.of(
+    config.setAllowedOrigins(List.of(
         "http://localhost:5050",
         "http://192.168.0.58:8080",
         "http://192.168.0.58",
         "https://agrilink-web-five.vercel.app",
         "http://localhost:56039"
-        ));
-
-    config.addAllowedOriginPattern("*"); 
+        )); 
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     config.setAllowedHeaders(List.of("*"));
     config.setAllowCredentials(true);
