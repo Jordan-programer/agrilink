@@ -1,7 +1,6 @@
 version: '3.9'
 
 services:
-
   db:
     image: mysql:8
     container_name: agri-db
@@ -13,7 +12,7 @@ services:
       - "3307:3306"
 
   backend:
-    build: ./backend
+    image: ghcr.io/jordan-programer/agri-backend:latest
     container_name: agri-backend
     ports:
       - "8080:8080"
@@ -26,7 +25,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
 
   ai:
-    build: ./ai-service
+    image: ghcr.io/jordan-programer/agri-ai:latest
     container_name: agri-ai
     ports:
       - "5000:5000"
