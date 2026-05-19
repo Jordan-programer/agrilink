@@ -196,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       final token = await _storage.read(key: "token");
-      final uri = Uri.parse("https://agrilink-production-c9e6.up.railway.app/users/$_userId");
+      final uri = Uri.parse("http://72.62.83.244:8080/users/$_userId");
       
       final response = await http.put(
         uri,

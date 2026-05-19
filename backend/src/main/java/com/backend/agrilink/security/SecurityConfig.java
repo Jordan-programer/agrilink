@@ -43,7 +43,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of(
-            "https://agrilink-web-five.vercel.app"
+            "https://agrilink-web-five.vercel.app",
+            "http://72.62.83.244:5173"
         ));
 
         configuration.setAllowedMethods(List.of(

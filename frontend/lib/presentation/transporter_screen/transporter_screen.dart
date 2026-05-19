@@ -76,7 +76,7 @@ class _TransporterScreenState extends State<TransporterScreen>
 
     try {
       final token = await _storage.read(key: "token");
-      final uri = Uri.parse("https://agrilink-production-c9e6.up.railway.app/orders/$orderId/transport/accept/$_userId");
+      final uri = Uri.parse("http://72.62.83.244:8080/orders/$orderId/transport/accept/$_userId");
       
       final response = await http.put(
         uri,
