@@ -38,7 +38,7 @@ print("Colunas prontas para o Prophet:", df_grouped.columns.tolist())
 # =========================
 # MODELO PROPHET GLOBAL
 # =========================
-model = Prophet(
+prophet_model = Prophet(
     yearly_seasonality=True,
     weekly_seasonality=False,
     daily_seasonality=False
