@@ -44,12 +44,12 @@ prophet_model = Prophet(
     daily_seasonality=False
 )
 
-model.fit(df_grouped)
+prophet_model.fit(df_grouped)
 
 # =========================
 # SALVAR MODELO + ENCODERS
 # =========================
-joblib.dump(model, "models/demand_model.pkl")
+joblib.dump(prophet_model, "models/demand_model.pkl")
 joblib.dump(le_produto, "models/le_produto.pkl")
 joblib.dump(le_provincia, "models/le_provincia.pkl")
 
