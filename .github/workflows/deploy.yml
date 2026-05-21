@@ -26,14 +26,14 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/agri-backend:latest
+          tags: ghcr.io/jordan-programer/agri-backend:latest
 
       - name: Build e Push da IA
         uses: docker/build-push-action@v5
         with:
           context: ./ai-service
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/agri-ai:latest
+          tags: ghcr.io/jordan-programer/agri-ai:latest
 
   deploy:
     needs: build-and-push
