@@ -25,7 +25,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
 
   ai:
-    image: ghcr.io/jordan-programer/agri-ai:latest
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
     container_name: agri-ai
     ports:
       - "5000:5000"
