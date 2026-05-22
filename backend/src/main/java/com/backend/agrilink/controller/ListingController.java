@@ -96,6 +96,7 @@ public class ListingController {
                 .collect(Collectors.toMap(User::getId, u -> u));
 
         List<ProductResponseDTO> response = listings.stream()
+                .filter(listing -> productMap.containsKey(listing.getProductId()) && farmerMap.containsKey(listing.getAgricultorId()))
                 .map(listing -> mapToResponseDTO(listing, productMap, farmerMap))
                 .toList();
 
@@ -105,20 +106,22 @@ public class ListingController {
     // MÉTODO PRIVADO (FORA DO GETMAPPING)
     private ProductResponseDTO mapToResponseDTO(Listing listing, Map<Long, Product> productMap, Map<UUID, User> farmerMap) {
         Product prod = productMap.get(listing.getProductId());
-        if (prod == null) throw new RuntimeException("Produto não encontrado para listing: " + listing.getId());
-
         User farmer = farmerMap.get(listing.getAgricultorId());
-        if (farmer == null) throw new RuntimeException("Agricultor não encontrado para listing: " + listing.getId());
+
+        String productName = prod != null ? prod.getNome() : "Produto Desconhecido";
+        com.backend.agrilink.model.CategoryList catId = prod != null ? prod.getCategoriaId() : null;
+        String imageUrl = prod != null ? prod.getImageUrl() : null;
+        String farmerName = farmer != null ? farmer.getNome() : "Agricultor Desconhecido";
 
         return ProductResponseDTO.builder()
                 .id(listing.getId())
-                .productName(prod.getNome())
+                .productName(productName)
                 .productId(listing.getProductId())
                 .newProduct(false)
-                .categoriaId(prod.getCategoriaId())
-                .imageUrl(prod.getImageUrl())
+                .categoriaId(catId)
+                .imageUrl(imageUrl)
                 .agricultorId(listing.getAgricultorId().toString())
-                .farmerName(farmer.getNome())
+                .farmerName(farmerName)
                 .preco(listing.getPreco())
                 .quantidade(listing.getQuantidade())
                 .unidade(listing.getUnidade())
