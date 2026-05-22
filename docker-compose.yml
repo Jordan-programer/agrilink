@@ -10,10 +10,16 @@ services:
       MYSQL_DATABASE: agri
     ports:
       - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     image: ghcr.io/jordan-programer/agri-backend:latest
     container_name: agri-backend
+    restart: always
     ports:
       - "8080:8080"
     depends_on:
@@ -28,5 +34,6 @@ services:
   ai:
     image: ghcr.io/jordan-programer/agri-ai:latest
     container_name: agri-ai
+    restart: always
     ports:
       - "5000:5000"
