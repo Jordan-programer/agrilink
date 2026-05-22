@@ -88,11 +88,12 @@ class _RegisterFormWidgetState extends State<RegisterFormWidget> {
     setState(() => _isLoading = true);
 
     try {
+      final String phoneClean = _phoneController.text.replaceAll(' ', '').trim();
       final payload = {
         "nome": _nameController.text.trim(),
-        "telefone": _phoneController.text.trim(),
+        "telefone": phoneClean,
         "email": _emailController.text.trim().isEmpty 
-               ? '${_phoneController.text.replaceAll(' ', '')}@agrilink.com' 
+               ? '$phoneClean@agrilink.com' 
                : _emailController.text.trim(),
         "senha": _passwordController.text.trim(),
         "tipo": _selectedRole.toUpperCase(),

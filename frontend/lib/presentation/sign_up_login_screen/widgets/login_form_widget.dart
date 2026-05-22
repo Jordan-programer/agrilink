@@ -50,8 +50,13 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
     try {
       final api = ApiService();
 
+      String identifier = _identifierController.text.trim();
+      if (!identifier.contains('@')) {
+        identifier = identifier.replaceAll(' ', '');
+      }
+
       final result = await api.login(
-        _identifierController.text.trim(),
+        identifier,
         _passwordController.text.trim(),
       );
 
@@ -74,7 +79,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
       final tcpService = TcpClientService();
       bool isConnected = await tcpService.connect();
       if (isConnected) {
-        tcpService.sendLogin(_identifierController.text.trim(), _passwordController.text.trim());
+        tcpService.sendLogin(identifier, _passwordController.text.trim());
       }
 
       if (!mounted) return;
