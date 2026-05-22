@@ -107,7 +107,7 @@ public class ListingController {
         User farmer = farmerMap.get(listing.getAgricultorId());
 
         String productName = prod != null ? prod.getNome() : "Produto Desconhecido";
-        com.backend.agrilink.model.CategoryList catId = prod != null ? prod.getCategoriaId() : null;
+        com.backend.agrilink.model.Categorias catId = prod != null ? prod.getCategoriaId() : null;
         String imageUrl = prod != null ? prod.getImageUrl() : null;
         String farmerName = farmer != null ? farmer.getNome() : "Agricultor Desconhecido";
 
