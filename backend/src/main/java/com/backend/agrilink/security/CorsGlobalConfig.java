@@ -14,7 +14,12 @@ public class CorsGlobalConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                    .allowedOrigins("https://agrilink-web-five.vercel.app")
+                    .allowedOriginPatterns(
+                        "https://agrilink-web-five.vercel.app",
+                        "http://72.62.83.244:*",
+                        "http://localhost:*",
+                        "http://127.0.0.1:*"
+                    )
                     .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
                     .allowedHeaders("*")
                     .allowCredentials(true);
