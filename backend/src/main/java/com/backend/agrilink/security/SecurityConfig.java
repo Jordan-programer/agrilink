@@ -46,7 +46,11 @@ public class SecurityConfig {
             "https://agrilink-web-five.vercel.app",
             "http://72.62.83.244:*",
             "http://localhost:*",
-            "http://127.0.0.1:*"
+            "http://127.0.0.1:*",
+            "https://*.ruitinerante.com",
+            "https://ruitinerante.com",
+            "http://*.ruitinerante.com",
+            "http://ruitinerante.com"
         ));
 
         configuration.setAllowedMethods(List.of(
