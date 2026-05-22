@@ -58443,7 +58443,7 @@ A.afp.prototype={
 Bv(){var s=0,r=A.u(t.rY),q,p,o
 var $async$Bv=A.p(function(a,b){if(a===1)return A.q(b,r)
 for(;;)switch(s){case 0:s=3
-return A.m(A.aYG(A.de("http://192.168.0.58:5001/demanda/global",0,null),null),$async$Bv)
+return A.m(A.aYG(A.de("https://api.ruitinerante.com/ai-service/demanda/global",0,null),null),$async$Bv)
 case 3:o=b
 if(o.b===200){p=J.h7(B.O.di(0,A.hz(A.hy(o.e)).bn(0,o.w),null),new A.afq(),t.wC)
 p=A.a0(p,p.$ti.h("al.E"))
@@ -58610,7 +58610,7 @@ Bu(a){return this.aaw(a)},
 aaw(a){var s=0,r=A.u(t.xA),q,p=2,o=[],n,m,l,k,j,i,h,g,f,e,d,c
 var $async$Bu=A.p(function(b,a0){if(b===1){o.push(a0)
 s=p}for(;;)switch(s){case 0:p=4
-g=A.de("http://192.168.0.58:5001/preco/previsao",0,null)
+g=A.de("https://api.ruitinerante.com/ai-service/preco/previsao",0,null)
 f=t.N
 e=A.ag(["Content-Type","application/json"],f,f)
 s=7

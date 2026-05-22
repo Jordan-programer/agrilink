@@ -3,7 +3,7 @@ import 'package:agrilink_app/models/price_point.dart';
 import 'package:http/http.dart' as http;
 
 class PriceChartService {
-  final String baseUrl = "http://192.168.0.58:5001/preco/previsao";
+  final String baseUrl = "https://api.ruitinerante.com/ai-service/preco/previsao";
 
   Future<List<PricePoint>> getForecast(String produto) async {
     try {

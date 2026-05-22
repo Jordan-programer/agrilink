@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/forecast_model.dart';
 
 class AiForecastService {
-  final String baseUrl = "http://192.168.0.58:5001";
+  final String baseUrl = "https://api.ruitinerante.com/ai-service";
 
   Future<List<ForecastModel>> getForecasts() async {
     final response = await http.get(
