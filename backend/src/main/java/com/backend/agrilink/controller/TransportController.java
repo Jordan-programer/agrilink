@@ -11,7 +11,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/transports")
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class TransportController {
 
     private final TransportService service;
