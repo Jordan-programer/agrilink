@@ -30,7 +30,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 👈 libera preflight
-                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/auth/**", "/error").permitAll() // 👈 libera /error para evitar 403 mascarando erros reais
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
