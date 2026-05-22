@@ -17,12 +17,13 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - db
       - ai
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/agri
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_URL: jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres?sslmode=require
+      SPRING_DATASOURCE_USERNAME: postgres.wniwgtzvpdzfqtgiwwen
+      SPRING_DATASOURCE_PASSWORD: jordan@123pasca
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+      SPRING_JPA_DIALECT: org.hibernate.dialect.PostgreSQLDialect
 
   ai:
     image: ghcr.io/jordan-programer/agri-ai:latest
