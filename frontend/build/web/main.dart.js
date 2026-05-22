@@ -58482,7 +58482,7 @@ return A.t($async$BI,r)},
 H_(a,b){return this.aJL(a,b)},
 aJL(a,b){var s=0,r=A.u(t.a),q,p,o,n,m
 var $async$H_=A.p(function(c,d){if(c===1)return A.q(d,r)
-for(;;)switch(s){case 0:p=A.de("http://72.62.83.244:8080/auth/login",0,null)
+for(;;)switch(s){case 0:p=A.de("https://api.ruitinerante.com/auth/login",0,null)
 o=t.N
 n=A.ag(["Content-Type","application/json"],o,o)
 s=3
@@ -58496,7 +58496,7 @@ return A.t($async$H_,r)},
 HO(a,b){return this.aMq(0,b)},
 aMq(a,b){var s=0,r=A.u(t.a),q,p,o,n
 var $async$HO=A.p(function(c,d){if(c===1)return A.q(d,r)
-for(;;)switch(s){case 0:o=A.de("http://72.62.83.244:8080/auth/register",0,null)
+for(;;)switch(s){case 0:o=A.de("https://api.ruitinerante.com/auth/register",0,null)
 n=t.N
 n=A.ag(["Content-Type","application/json"],n,n)
 s=3
@@ -58513,7 +58513,7 @@ var $async$cz=A.p(function(c,d){if(c===1)return A.q(d,r)
 for(;;)switch(s){case 0:s=3
 return A.m(p.lH(),$async$cz)
 case 3:o=d
-n=A.de("http://72.62.83.244:8080"+b,0,null)
+n=A.de("https://api.ruitinerante.com"+b,0,null)
 m=t.N
 m=A.z(m,m)
 m.n(0,"Content-Type","application/json")
@@ -58529,7 +58529,7 @@ var $async$i8=A.p(function(c,d){if(c===1)return A.q(d,r)
 for(;;)switch(s){case 0:s=3
 return A.m(p.lH(),$async$i8)
 case 3:o=d
-n=A.de("http://72.62.83.244:8080"+a,0,null)
+n=A.de("https://api.ruitinerante.com"+a,0,null)
 m=t.N
 m=A.z(m,m)
 m.n(0,"Content-Type","application/json")
