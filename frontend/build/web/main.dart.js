@@ -53913,7 +53913,7 @@ cz(a,b){return this.aaf(0,b)},
 aaf(a,b){var s=0,r=A.u(t.Wd),q,p=this,o,n
 var $async$cz=A.p(function(c,d){if(c===1)return A.q(d,r)
 for(;;)switch(s){case 0:o=A
-n=A.de("http://72.62.83.244:8080"+b,0,null)
+n=A.de("https://api.ruitinerante.com"+b,0,null)
 s=3
 return A.m(p.qv(),$async$cz)
 case 3:q=o.aYG(n,d)
@@ -53924,7 +53924,7 @@ return A.t($async$cz,r)},
 i8(a,b){return this.aLY(a,b)},
 aLY(a,b){var s=0,r=A.u(t.Wd),q,p=this,o,n
 var $async$i8=A.p(function(c,d){if(c===1)return A.q(d,r)
-for(;;)switch(s){case 0:o=A.de("http://72.62.83.244:8080"+a,0,null)
+for(;;)switch(s){case 0:o=A.de("https://api.ruitinerante.com"+a,0,null)
 s=3
 return A.m(p.qv(),$async$i8)
 case 3:n=d
@@ -53936,7 +53936,7 @@ return A.t($async$i8,r)},
 vO(a,b,c){return this.aMb(0,b,c)},
 aMb(a,b,c){var s=0,r=A.u(t.Wd),q,p=this,o,n
 var $async$vO=A.p(function(d,e){if(d===1)return A.q(e,r)
-for(;;)switch(s){case 0:o=A.de("http://72.62.83.244:8080"+b,0,null)
+for(;;)switch(s){case 0:o=A.de("https://api.ruitinerante.com"+b,0,null)
 s=3
 return A.m(p.qv(),$async$vO)
 case 3:n=e
@@ -53949,7 +53949,7 @@ r5(a,b){return this.aEY(0,b)},
 aEY(a,b){var s=0,r=A.u(t.Wd),q,p=this,o,n
 var $async$r5=A.p(function(c,d){if(c===1)return A.q(d,r)
 for(;;)switch(s){case 0:o=A
-n=A.de("http://72.62.83.244:8080"+b,0,null)
+n=A.de("https://api.ruitinerante.com"+b,0,null)
 s=3
 return A.m(p.qv(),$async$r5)
 case 3:q=o.aeL(n,null,null,d)
@@ -57282,7 +57282,7 @@ if(f.length!==0)J.dt(l,"senha",f)
 s=7
 return A.m(B.bE.lE(0,"token"),$async$yp)
 case 7:k=a1
-j=A.de("http://72.62.83.244:8080/users/"+m.as,0,null)
+j=A.de("https://api.ruitinerante.com/users/"+m.as,0,null)
 i=A.z(c,c)
 J.dt(i,"Content-Type","application/json")
 if(k!=null)J.dt(i,"Authorization","Bearer "+k)
@@ -58159,7 +58159,7 @@ break}p=4
 s=7
 return A.m(B.bE.lE(0,"token"),$async$wW)
 case 7:m=c
-l=A.de("http://72.62.83.244:8080/orders/"+a+"/transport/accept/"+n.r,0,null)
+l=A.de("https://api.ruitinerante.com/orders/"+a+"/transport/accept/"+n.r,0,null)
 i=t.N
 k=A.z(i,i)
 J.dt(k,"Content-Type","application/json")
