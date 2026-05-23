@@ -46,7 +46,6 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus = PaymentStatus.PENDENTE;
 
-    @jakarta.persistence.Lob
     @jakarta.persistence.Column(columnDefinition = "TEXT")
     private String comprovativoBase64;
 }

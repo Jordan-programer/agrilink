@@ -25,7 +25,7 @@ services:
     depends_on:
       - ai
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres?sslmode=require
+      SPRING_DATASOURCE_URL: jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
       SPRING_DATASOURCE_USERNAME: postgres.wniwgtzvpdzfqtgiwwen
       SPRING_DATASOURCE_PASSWORD: jordan@123pasca
       SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
