@@ -34,7 +34,18 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
   @override
   void initState() {
     super.initState();
+    _checkSession();
     _fetchProducts();
+  }
+
+  Future<void> _checkSession() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: "token");
+    if (token == null || token.isEmpty) {
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/sign-up-login-screen', (route) => false);
+      }
+    }
   }
 
   Future<void> _fetchProducts() async {

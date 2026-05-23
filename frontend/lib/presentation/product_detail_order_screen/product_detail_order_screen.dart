@@ -3,6 +3,7 @@ import 'package:agrilink_app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../models/cart_item_model.dart';
 import '../../providers/cart_provider.dart';
@@ -54,6 +55,7 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
   @override
   void initState() {
     super.initState();
+    _checkSession();
     _product =
         widget.productArgs ??
         {
@@ -106,6 +108,16 @@ class _ProductDetailOrderScreenState extends State<ProductDetailOrderScreen>
           ),
         );
       });
+    }
+  }
+
+  Future<void> _checkSession() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: "token");
+    if (token == null || token.isEmpty) {
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/sign-up-login-screen', (route) => false);
+      }
     }
   }
 

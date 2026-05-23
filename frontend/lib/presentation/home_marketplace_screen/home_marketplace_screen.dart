@@ -115,6 +115,14 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
 
   Future<void> _loadUserRole() async {
     const storage = FlutterSecureStorage();
+    final token = await storage.read(key: "token");
+    if (token == null || token.isEmpty) {
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.signUpLoginScreen, (route) => false);
+      }
+      return;
+    }
+
     final userStr = await storage.read(key: "user");
     if (userStr != null) {
       final userJson = jsonDecode(userStr);

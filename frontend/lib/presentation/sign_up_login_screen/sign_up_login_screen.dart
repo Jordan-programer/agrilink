@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../routes/app_routes.dart';
 import '../../theme/app_theme.dart';
@@ -25,6 +26,7 @@ class _SignUpLoginScreenState extends State<SignUpLoginScreen>
   @override
   void initState() {
     super.initState();
+    _checkActiveSession();
     _tabController = TabController(length: 2, vsync: this);
     _fadeController = AnimationController(
       vsync: this,
@@ -39,6 +41,16 @@ class _SignUpLoginScreenState extends State<SignUpLoginScreen>
           CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
         );
     _fadeController.forward();
+  }
+
+  Future<void> _checkActiveSession() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: "token");
+    if (token != null && token.isNotEmpty) {
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.homeMarketplaceScreen);
+      }
+    }
   }
 
   @override
