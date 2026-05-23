@@ -27,6 +27,7 @@ import './widgets/kpi_metrics_widget.dart';
 import './widgets/marketplace_search_widget.dart';
 import './widgets/price_chart_widget.dart';
 import './widgets/product_card_widget.dart';
+import './widgets/farmers_list_tab_widget.dart';
 
 class NavItemDef {
   final IconData icon;
@@ -150,7 +151,7 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
     } else {
       // COMPRADOR
       _navItems.add(NavItemDef(Icons.shopping_bag_outlined, Icons.shopping_bag_rounded, 'Produtos', const SizedBox.shrink()));
-      _navItems.add(NavItemDef(Icons.groups_outlined, Icons.groups_rounded, 'Agricultores', const Scaffold(body: Center(child: Text('Lista de Agricultores (Em Breve)')))));
+      _navItems.add(NavItemDef(Icons.groups_outlined, Icons.groups_rounded, 'Agricultores', const SizedBox.shrink()));
       _navItems.add(NavItemDef(Icons.local_shipping_outlined, Icons.local_shipping_rounded, 'Rastreamento', const CompradorOrdersScreen()));
       _navItems.add(NavItemDef(Icons.person_outline_rounded, Icons.person_rounded, 'Perfil', const ProfileScreen()));
     }
@@ -218,7 +219,9 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
     final label = _navItems[_selectedNavIndex].label;
     
     if (label == 'Mercado' || label == 'Produtos') {
-      return isTablet ? _buildTabletLayout(theme) : _buildPhoneLayout(theme);
+      return _buildPhoneLayout(theme);
+    } else if (label == 'Agricultores') {
+      return FarmersListTabWidget(allProducts: _products);
     } else {
       return _navItems[_selectedNavIndex].screen;
     }
@@ -239,6 +242,22 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
 
     if (_selectedNavIndex >= _navItems.length) {
       _selectedNavIndex = 0;
+    }
+
+    if (isTablet) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        body: Row(
+          children: [
+            _buildNavigationRail(theme),
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: _getActiveScreen(theme, isTablet),
+            ),
+          ],
+        ),
+        floatingActionButton: _buildFloatingActionButtons(),
+      );
     }
 
     return Scaffold(
@@ -347,64 +366,58 @@ class _HomeMarketplaceScreenState extends State<HomeMarketplaceScreen>
     );
   }
 
-  Widget _buildTabletLayout(ThemeData theme) {
-    return Row(
-      children: [
-        NavigationRail(
-          selectedIndex: _selectedNavIndex,
-          onDestinationSelected: (i) => setState(() => _selectedNavIndex = i),
-          labelType: NavigationRailLabelType.all,
-          backgroundColor: AppTheme.surface,
-          selectedIconTheme: const IconThemeData(
-            color: AppTheme.primary,
-            size: 24,
-          ),
-          unselectedIconTheme: const IconThemeData(
-            color: AppTheme.outline,
-            size: 24,
-          ),
-          selectedLabelTextStyle: GoogleFonts.plusJakartaSans(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.primary,
-          ),
-          unselectedLabelTextStyle: GoogleFonts.plusJakartaSans(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: AppTheme.outline,
-          ),
-          leading: Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Column(
-              children: [
-                const SizedBox(height: 16),
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.agriculture_rounded,
-                    color: AppTheme.primary,
-                    size: 22,
-                  ),
-                ),
-              ],
+  Widget _buildNavigationRail(ThemeData theme) {
+    return NavigationRail(
+      selectedIndex: _selectedNavIndex,
+      onDestinationSelected: (i) => setState(() => _selectedNavIndex = i),
+      labelType: NavigationRailLabelType.all,
+      backgroundColor: AppTheme.surface,
+      selectedIconTheme: const IconThemeData(
+        color: AppTheme.primary,
+        size: 24,
+      ),
+      unselectedIconTheme: const IconThemeData(
+        color: AppTheme.outline,
+        size: 24,
+      ),
+      selectedLabelTextStyle: GoogleFonts.plusJakartaSans(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: AppTheme.primary,
+      ),
+      unselectedLabelTextStyle: GoogleFonts.plusJakartaSans(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: AppTheme.outline,
+      ),
+      leading: Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.agriculture_rounded,
+                color: AppTheme.primary,
+                size: 22,
+              ),
             ),
-          ),
-          destinations: _navItems.map((item) {
-            return NavigationRailDestination(
-              icon: Icon(item.icon),
-              selectedIcon: Icon(item.selectedIcon),
-              label: Text(item.label),
-            );
-          }).toList(),
+          ],
         ),
-        const VerticalDivider(width: 1),
-        Expanded(child: _buildPhoneLayout(theme)),
-      ],
+      ),
+      destinations: _navItems.map((item) {
+        return NavigationRailDestination(
+          icon: Icon(item.icon),
+          selectedIcon: Icon(item.selectedIcon),
+          label: Text(item.label),
+        );
+      }).toList(),
     );
   }
 
