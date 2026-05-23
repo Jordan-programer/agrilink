@@ -162,8 +162,9 @@ class _PublishProductScreenState extends State<PublishProductScreen> {
     try {
       final productObj = _availableProducts.firstWhere((p) => p['id'] == _selectedProductId);
       final productName = productObj['nome'];
+      final mappedUnit = _mapUnit(_selectedUnit);
 
-      final response = await ApiService().get('/ai/recommend-price?product=$productName&province=$_selectedProvince');
+      final response = await ApiService().get('/ai/recommend-price?product=$productName&province=$_selectedProvince&unit=$mappedUnit');
       
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));

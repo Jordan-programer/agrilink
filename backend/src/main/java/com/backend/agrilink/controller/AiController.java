@@ -18,9 +18,10 @@ public class AiController {
     @GetMapping("/recommend-price")
     public ResponseEntity<Map<String, Object>> recommendPrice(
             @RequestParam String product,
-            @RequestParam(required = false, defaultValue = "Luanda") String province) {
+            @RequestParam(required = false, defaultValue = "Luanda") String province,
+            @RequestParam(required = false, defaultValue = "KG") String unit) {
         
-        return ResponseEntity.ok(aiService.recommendPrice(product, province));
+        return ResponseEntity.ok(aiService.recommendPrice(product, province, unit));
     }
 
     // RIA04
