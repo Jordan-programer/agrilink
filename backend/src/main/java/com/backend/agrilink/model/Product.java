@@ -23,6 +23,7 @@ public class Product {
     @Enumerated(EnumType.STRING)
     private Categorias categoriaId;
     
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARCHAR)
     @jakarta.persistence.Column(name = "image_data", columnDefinition = "TEXT")
     private String imageUrl;
 }

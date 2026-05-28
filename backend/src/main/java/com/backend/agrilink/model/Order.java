@@ -46,6 +46,7 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus = PaymentStatus.PENDENTE;
 
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARCHAR)
     @jakarta.persistence.Column(columnDefinition = "TEXT")
     private String comprovativoBase64;
 }
